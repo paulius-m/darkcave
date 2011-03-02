@@ -1,0 +1,7 @@
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\darkcave.exe
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\darkcave.pdb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Debug\ResolveAssemblyReference.cache
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Debug\Microsoft.Xna.Framework.RuntimeProfile.txt
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Debug\darkcave.exe
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Debug\darkcave.pdb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\Box.xnb
