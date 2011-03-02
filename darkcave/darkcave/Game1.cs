@@ -16,14 +16,27 @@ namespace darkcave
     /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
-        GraphicsDeviceManager graphics;
+        public GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        Map map;
+        Camera cam;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            Instance = this;
+
         }
+
+        public static Game1 Instance
+        {
+            get;
+            private set;
+        }
+
+
+
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -35,6 +48,9 @@ namespace darkcave
         {
             // TODO: Add your initialization logic here
 
+            map = new Map { Size = new Vector3(30, 30, 0) };
+            cam = new Camera();
+            map.Init();
             base.Initialize();
         }
 
@@ -46,7 +62,7 @@ namespace darkcave
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
+            map.model = Content.Load<Model>("box");
             // TODO: use this.Content to load your game content here
         }
 
@@ -83,9 +99,9 @@ namespace darkcave
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            map.Draw(cam);
 
-            base.Draw(gameTime);
+            //base.Draw(gameTime);
         }
     }
 }
