@@ -1,1 +1,2 @@
 Content\Box.xnb
+Content\InstancedModel.xnb

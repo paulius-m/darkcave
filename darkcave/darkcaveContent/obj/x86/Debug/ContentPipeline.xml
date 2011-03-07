@@ -21,6 +21,15 @@
       <Output>obj\x86\Debug\Box_0.xml</Output>
       <Time>2011-03-02T21:35:45.6476448+02:00</Time>
     </Item>
+    <Item>
+      <Source>InstancedModel.fx</Source>
+      <Name>InstancedModel</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+      <Options>None</Options>
+      <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\InstancedModel.xnb</Output>
+      <Time>2011-03-06T21:49:09.9222666+02:00</Time>
+    </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>

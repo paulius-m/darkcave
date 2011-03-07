@@ -47,8 +47,9 @@ namespace darkcave
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            IsMouseVisible = true;
 
-            map = new Map { Size = new Vector3(30, 30, 0) };
+            map = new Map { Size = new Vector3(100, 100, 0) };
             cam = new Camera();
             map.Init();
             base.Initialize();
@@ -62,8 +63,9 @@ namespace darkcave
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            map.model = Content.Load<Model>("box");
-            // TODO: use this.Content to load your game content here
+
+            // TODO: use this.Content to load your game content here            
+            map.Load();
         }
 
         /// <summary>
@@ -80,16 +82,51 @@ namespace darkcave
         /// checking for collisions, gathering input, and playing audio.
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        /// 
+        int count;
         protected override void Update(GameTime gameTime)
         {
             // Allows the game to exit
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
+            count++;
+
             // TODO: Add your update logic here
 
+            MouseState mouse = Mouse.GetState();
+
+            Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
+            map.sun = point;
+
+            Map.Node node = map.GetNode((int)point.X, (int) point.Y );
+
+            if (node != null)
+            {
+
+                if (node.Type == Map.NodeType.Air)
+                    node.Light = new Vector3(1,0,0);
+
+                if (mouse.LeftButton == ButtonState.Pressed)
+                {
+                    node.Type = Map.NodeType.Air;
+                    node.Color = Vector3.One;
+                }
+
+            }
+
+            map.Update();
+            
             base.Update(gameTime);
         }
+
+        Vector3 getMapPoint(Vector3 mouseRay)
+        {
+            float t = -cam.Position.Z / mouseRay.Z;
+
+            return new Vector3(cam.Position.X + t * mouseRay.X, cam.Position.Y + t * mouseRay.Y, 0);
+        }
+
 
         /// <summary>
         /// This is called when the game should draw itself.
