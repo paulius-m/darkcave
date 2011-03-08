@@ -12,7 +12,7 @@ namespace darkcave
 
     static class MyMath
     {
-        public static bool IsBetween(float value, float min, float max)
+        public static bool IsBetween(int value, int min, int max)
         {
             return min <=value && value < max;
         }

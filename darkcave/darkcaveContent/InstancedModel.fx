@@ -10,13 +10,6 @@ float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
-
-// This sample uses a simple Lambert lighting model.
-float3 LightDirection = normalize(float3(-1, -1, -1));
-float3 DiffuseLight = 1.25;
-float3 AmbientLight = 0.25;
-
-
 texture Texture;
 
 sampler Sampler = sampler_state
@@ -51,14 +44,8 @@ VertexShaderOutput VertexShaderCommon(VertexShaderInput input, float4x4 instance
     float4 viewPosition = mul(worldPosition, View);
     output.Position = mul(viewPosition, Projection);
 
-    // Compute lighting, using a simple Lambert model.
-    float3 worldNormal = mul(input.Normal, instanceTransform);
-    
-    float diffuseAmount = max(-dot(worldNormal, LightDirection), 0);
-    
-    float3 lightingResult = saturate(diffuseAmount * DiffuseLight + AmbientLight);
-    
-    output.Color = float4(lightingResult, 1);
+
+    output.Color = float4(0,0,0,0);
 
     // Copy across the input texture coordinate.
     output.TextureCoordinate = input.TextureCoordinate;
@@ -71,7 +58,7 @@ VertexShaderOutput VertexShaderCommon(VertexShaderInput input, float4x4 instance
 VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
                                                   float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR0, float3 light: COLOR1)
 {
-	VertexShaderOutput o = VertexShaderCommon(input, mul(World, transpose(instanceTransform)));
+	VertexShaderOutput o = VertexShaderCommon(input, transpose(instanceTransform));
 	o.Color.xyz  = light.xyz * color.xyz;
 	return o; 
 }

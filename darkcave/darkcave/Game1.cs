@@ -20,6 +20,7 @@ namespace darkcave
         SpriteBatch spriteBatch;
 
         Map map;
+        Instancer render;
         Camera cam;
         public Game1()
         {
@@ -48,8 +49,8 @@ namespace darkcave
         {
             // TODO: Add your initialization logic here
             IsMouseVisible = true;
-
-            map = new Map { Size = new Vector3(150, 150, 0) };
+            render = new Instancer(150*150);
+            map = new Map (new Vector3(150, 150, 0));
             cam = new Camera();
             map.Init();
             base.Initialize();
@@ -65,7 +66,7 @@ namespace darkcave
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here            
-            map.Load();
+            render.Load();
         }
 
         /// <summary>
@@ -90,8 +91,6 @@ namespace darkcave
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
 
-            count++;
-
             // TODO: Add your update logic here
 
             MouseState mouse = Mouse.GetState();
@@ -99,31 +98,29 @@ namespace darkcave
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
             map.sun = point;
 
-            Map.Node node = map.GetNode((int)point.X, (int) point.Y );
+            Node node = map.GetNode((int)point.X, (int) point.Y );
 
             if (mouse.RightButton == ButtonState.Pressed)
             {
                 cam.Position = new Vector3(point.X, point.Y, cam.Position.Z);
-                //cam.Target = new Vector3(point.X, point.Y, 0);
             }
 
 
             if (node != null)
             {
 
-                if (node.Type == Map.NodeType.Air)
+                if (node.Type == NodeType.Air)
                     node.Light = new Vector3(1,0,0);
 
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    node.Type = Map.NodeType.Air;
-                    node.Color = Vector3.One;
+                    node.SetType(NodeType.Air);
                 }
 
             }
+            render.Reset();
+            map.Update(cam, render);
 
-            map.Update();
-            
             base.Update(gameTime);
         }
 
@@ -143,7 +140,7 @@ namespace darkcave
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            map.Draw(cam);
+            render.Draw(cam);
 
             //base.Draw(gameTime);
         }

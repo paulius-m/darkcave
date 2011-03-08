@@ -24,7 +24,6 @@ namespace darkcave
         {
             get {return position; }
             set {position = value; updateView(); }
-        
         }
         
         private Vector3 target;
@@ -34,9 +33,12 @@ namespace darkcave
             set { target = value; updateView(); }
         }
 
+        public BoundingFrustum Frustrum;
+
         private void updateView()
         {
             View = Matrix.CreateLookAt(position, target, Vector3.Up);
+            Frustrum = new BoundingFrustum(View * Projection);
         }
 
         public Camera()
@@ -48,7 +50,7 @@ namespace darkcave
 
             Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), AspectRatio, 1.0f, 1000.0f);
 
-            position = new Vector3(30, 30, 80);
+            position = new Vector3(50, 50, 80);
             target = new Vector3(30, 30, 0);
             updateView();
         }
@@ -59,5 +61,6 @@ namespace darkcave
             Vector3 far = view.Unproject(new Vector3(mouseX, mouseY, 1), Projection, View, Matrix.Identity);
             return Vector3.Normalize(far - near);
         }
+
     }
 }
