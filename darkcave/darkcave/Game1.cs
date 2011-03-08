@@ -49,7 +49,7 @@ namespace darkcave
             // TODO: Add your initialization logic here
             IsMouseVisible = true;
 
-            map = new Map { Size = new Vector3(100, 100, 0) };
+            map = new Map { Size = new Vector3(150, 150, 0) };
             cam = new Camera();
             map.Init();
             base.Initialize();
@@ -100,6 +100,13 @@ namespace darkcave
             map.sun = point;
 
             Map.Node node = map.GetNode((int)point.X, (int) point.Y );
+
+            if (mouse.RightButton == ButtonState.Pressed)
+            {
+                cam.Position = new Vector3(point.X, point.Y, cam.Position.Z);
+                //cam.Target = new Vector3(point.X, point.Y, 0);
+            }
+
 
             if (node != null)
             {

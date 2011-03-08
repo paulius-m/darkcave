@@ -72,7 +72,7 @@ VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
                                                   float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR0, float3 light: COLOR1)
 {
 	VertexShaderOutput o = VertexShaderCommon(input, mul(World, transpose(instanceTransform)));
-	o.Color.xyz  = light.xyz;
+	o.Color.xyz  = light.xyz * color.xyz;
 	return o; 
 }
 

@@ -65,7 +65,7 @@ namespace darkcave
             {
                 double x = i1 / Size.X;
                 double y = i2 / Size.Y;
-                double noise = Noise.NextOctave2D(2, x, y) + y;
+                double noise = Noise.NextOctave2D(10, x, y) + y;
 
                 var node = new Node {
                     Postion = new Vector3(i1, i2, 0),
@@ -75,9 +75,8 @@ namespace darkcave
                 };
 
                 if (node.Type == NodeType.Earth)
-                    node.Color = new Vector3(0.0f, .5f, 0.0f);
-                else
-                    node.Light = new Vector3(1, 1, 1);
+                    node.Color = new Vector3(0, .5f, 0.0f);
+
                 Data[i1, i2] = node;
             }
 
@@ -98,8 +97,6 @@ namespace darkcave
             {
                 int x = (int)(node.Postion.X + Rays[i2].X);
                 int y = (int)(node.Postion.Y + Rays[i2].Y);
-
-               
 
                 if (MyMath.IsBetween(x, 0, Size.X) && MyMath.IsBetween(y, 0, Size.Y))
                 {
@@ -129,7 +126,7 @@ namespace darkcave
 
                     if (node.Type == NodeType.Air)
                         sum += new Vector3(.4f, .6f, 1);
-                    count++;
+                    //count++;
                 }
             }
             
@@ -138,32 +135,6 @@ namespace darkcave
 
             return (sum / (float)count);
         }
-
-        private bool isLight(Node node)
-        {
-            Vector3 ray = node.Postion - sun;
-            int r = (int) (ray.Length() + 1);
-            ray /= r;
-
-            for (int i = 1; i <= r; i++)
-            {
-                int x = (int)((i * ray.X) + sun.X);
-                int y = (int)((i * ray.Y) + sun.Y);
-
-                if (MyMath.IsBetween(x, 0, Size.X) && MyMath.IsBetween(y, 0, Size.Y))
-                {
-                    if (Data[x, y] == node)
-                        return true;
-
-                    if (Data[x, y].Type != NodeType.Earth )
-                        continue;
-                }
-                return false;
-            }
-
-            return true;
-        }
-
 
         List<Node> DirectlyLight = new List<Node>();
         private void directLights()
@@ -267,30 +238,15 @@ namespace darkcave
             {
                 var node = Data[i1, i2];
 
-                    node.Light = lightUp(node);
-                    //if (node.Type == NodeType.Filled)
-                    {
+                node.Light = lightUp(node);
+                var drawData = ToDrawArray[i1 * (int)Size.X + i2];
 
-                    var drawData = ToDrawArray[i1 * (int)Size.X + i2];
-
-                    drawData.Light = node.Light;
-                    drawData.Color = node.Color;
-                    ToDrawArray[i1 * (int)Size.X + i2] = drawData;
-                }
+                drawData.Light = node.Light;
+                drawData.Color = node.Color;
+                ToDrawArray[i1 * (int)Size.X + i2] = drawData;
             }
-            //Light.Next();
-
-            C++;
-            if (C < 10)
-                return;
-            C = 0;
-
-
-            sun.X--;
-            if (sun.X == 0)
-                sun.X = Size.X - 1;
         }
-        int C = 0;
+
         public void Draw(Camera cam)
         {
             DrawModelHardwareInstancing(model, instancedModelBones, ToDrawArray, cam.View, cam.Projection);
@@ -372,8 +328,5 @@ namespace darkcave
                 }
             }
         }
-
-
-
     }
 }
