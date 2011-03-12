@@ -20,41 +20,46 @@ namespace darkcave
         Ambient,
         Direct
     }
-    
-    public class Node
+
+    public class Node : Instanced
     {
         public NodeType Type;
         public double Value;
 
         public Vector3 Postion;
         public Vector3 Color = Vector3.One;
-        public Vector3 Light;
+        public Vector3 Diffuse;
+        public Vector3 Ambience;
         public LightType LType;
 
-        private InstanceData instance;
+        protected InstanceData Instance;
 
         public Node()
         {
-            instance = new InstanceData();
+            Instance = new InstanceData();
         }
 
         public void SetType(NodeType newType)
         {
+            if (Type == newType)
+                return;
             Type = newType;
+            if (Type == NodeType.Air)
+                Color = Vector3.One;
         }
 
         public void SetPosition(Vector3 pos)
         {
             Postion = pos;
-            instance.World = Matrix.CreateTranslation(pos);
+            Instance.World = Matrix.CreateTranslation(pos);
         }
 
         public InstanceData GetInstanceData()
         {
-            instance.Color = Color;
-            instance.Light = Light;
+            Instance.Color = Color;
+            Instance.Light = Diffuse + Ambience;
             
-            return instance;
+            return Instance;
         }
     }
 }

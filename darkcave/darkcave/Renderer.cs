@@ -30,7 +30,12 @@ namespace darkcave
             }
         }
     }
-    
+
+
+    public interface Instanced
+    {
+        InstanceData GetInstanceData();
+    }
     class Instancer
     {
         DynamicVertexBuffer instanceVertexBuffer;
@@ -47,9 +52,9 @@ namespace darkcave
 
         public void Load()
         {
-            model = Game1.Instance.Content.Load<Model>("box");
+            model = Game1.Instance.Content.Load<Model>("plane2");
             Effect ef = Game1.Instance.Content.Load<Effect>("InstancedModel");
-            atlas = Game1.Instance.Content.Load<Texture2D>("E");
+            atlas = Game1.Instance.Content.Load<Texture2D>("atlas");
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
@@ -59,9 +64,9 @@ namespace darkcave
             }
         }
 
-        public void AddInstance(InstanceData data)
+        public void AddInstance(Instanced instance)
         {
-            instances[instanceCount++] = data;
+            instances[instanceCount++] = instance.GetInstanceData();
         }
 
         public void Reset()
@@ -106,7 +111,7 @@ namespace darkcave
                     effect.Parameters["World"].SetValue(Matrix.Identity);
                     effect.Parameters["View"].SetValue(cam.View);
                     effect.Parameters["Projection"].SetValue(cam.Projection);
-                    //effect.Parameters["Texture"].SetValue(atlas);
+                    effect.Parameters["Texture"].SetValue(atlas);
                     
                     // Draw all the instance copies in a single call.
                     foreach (EffectPass pass in effect.CurrentTechnique.Passes)

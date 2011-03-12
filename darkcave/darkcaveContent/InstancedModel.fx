@@ -12,9 +12,12 @@ float4x4 Projection;
 
 texture Texture;
 
-sampler Sampler = sampler_state
+sampler diffuse = sampler_state
 {
     Texture = (Texture);
+	MinFilter = Linear;
+	MagFilter = Linear;
+	MipFilter = None;
 };
 
 
@@ -59,7 +62,9 @@ VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
                                                   float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR0, float3 light: COLOR1)
 {
 	VertexShaderOutput o = VertexShaderCommon(input, transpose(instanceTransform));
-	o.Color.xyz  = light.xyz * color.xyz;
+
+	o.Color.xyz  =  color.xyz * light.xyz;
+	o.TextureCoordinate = (o.TextureCoordinate)* 0.1f;
 	return o; 
 }
 
@@ -74,7 +79,9 @@ VertexShaderOutput NoInstancingVertexShader(VertexShaderInput input)
 // Both techniques share this same pixel shader.
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
-    return input.Color;
+    float4 map = tex2D(diffuse, input.TextureCoordinate.xy);
+	 map.xyz *= input.Color.xyz;
+	return map;
 }
 
 

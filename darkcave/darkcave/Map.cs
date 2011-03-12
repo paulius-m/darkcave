@@ -15,7 +15,11 @@ namespace darkcave
 
         public Vector3 sun;
 
-        public Node[,] Data;
+        private Vector3 Sky = new Vector3(.4f, .6f, 1);
+
+        public Node[][,] Data;
+
+        public Node[,] ForeGround;
 
         public Map(Vector3 size )
         {
@@ -26,40 +30,77 @@ namespace darkcave
 
         public void Init()
         {
-            Data = new Node[X, Y];
-            sun = new Vector3(50, 70, 0);
+            Data = new Node[2][,];
+            Data[0] = new Node[X, Y];
+            Data[1] = new Node[X, Y];
+
+            ForeGround = Data[0];
+            sun = new Vector3(0, 99, 0);
+            int i3 = 50;
 
             for (int i1 = 0; i1 < X; i1++)
-            for (int i2= 0; i2< Y; i2++)
             {
                 double x = i1 / Size.X;
-                double y = i2 / Size.Y;
-                double noise = Noise.NextOctave2D(1, x, y) + y;
+                    
+                double noise = Noise.NextOctave2D(10, x, 1);
 
-                var node = new Node {
+                i3 += (int)(noise);
+
+                var node = new Node
+                {
                     Value = noise,
                 };
 
-                node.SetType((noise < .5) ? NodeType.Earth : NodeType.Air);
-                node.SetPosition(new Vector3(i1, i2, 0));
-                if (node.Type == NodeType.Earth)
-                    node.Color = new Vector3(0, .5f, 0.0f);
+                node.SetType(NodeType.Earth);
+                node.SetPosition(new Vector3(i1, i3, 0));
+                node.Color = new Vector3(0, .5f, 0.0f);
 
-                Data[i1, i2] = node;
+                ForeGround[i1, i3] = node;
+            }
+
+            
+            for (int i1 = 0; i1 < X; i1++)
+            {
+                int middle = -1;
+                for (int i2 = Y-1; i2 >=0 ; i2--)
+                {
+                    double x = i1 / Size.X;
+                    double y = i2 / Size.Y;
+                    double noise = Noise.NextOctave2D(4, x, y);
+
+                    //if (ForeGround[i1, i2] != null)
+                    //{
+                    //    middle = i2;
+                    //    continue;
+                    //}
+
+                    var node = new Node
+                    {
+                        Value = noise,
+                    };
+
+                    node.SetType((noise < 0.5f) ? NodeType.Earth : NodeType.Air);
+
+                    node.SetPosition(new Vector3(i1, i2, 0));
+
+                    if (node.Type == NodeType.Earth)
+                        node.Color = new Vector3(.4f, .2f, 0.1f);
+                    
+                    if (node.Type == NodeType.Air)
+                        node.Color = new Vector3( (float)noise);
+
+                    ForeGround[i1, i2] = node;
+                }
             }
 
             ProprocesDraw();
         }
 
-        readonly Vector2[] Rays = new Vector2[] { new Vector2(0, 1), new Vector2(1, 0), new Vector2(0, -1), new Vector2(-1, 0) };
+        readonly Vector2[] Rays = new Vector2[] { new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(1, -1), new Vector2(0, -1), new Vector2(-1, -1), new Vector2(-1, 0), new Vector2(-1, 1) };
         private Vector3 lightUp (Node node)
         {
-
             Vector3 sum = new Vector3();
             int count = 0;
-
-            if (node.LType != LightType.Ambient && node.Type == NodeType.Earth)
-                return node.Light;
 
             for (int i2 = 0; i2 < Rays.Length; i2++)
             {
@@ -68,35 +109,34 @@ namespace darkcave
 
                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                 {
-                    Node hit = Data[x, y];
-                    switch(Data[x, y].Type)
+                    Node hit = ForeGround[x, y];
+                    switch(ForeGround[x, y].Type)
                     {
                         case NodeType.Earth:
                         {
                             if (node.Type == NodeType.Air)
                             {
-                                sum += hit.Light * hit.Color;
+                                sum += (hit.Diffuse + hit.Ambience) * hit.Color;
                                 count++;
                             }
                             break;
                         }
                         case NodeType.Air:
                         {
-                            sum += hit.Light;
+                            sum += hit.Diffuse;
                             count++;
                             break;
                         }
-
                     }
                 }
                 else
                 {
                     if (node.Type == NodeType.Air)
-                        sum += new Vector3(.4f, .6f, 1);
+                        sum += Sky;
                     count++;
                 }
             }
-            
+
             if (count == 0)
                 return sum;
 
@@ -104,16 +144,18 @@ namespace darkcave
         }
 
         List<Node> DirectlyLight = new List<Node>();
+
+        const double DegToRad =  0.01745327;
         private void directLights()
         {
             for (int i = 0; i < DirectlyLight.Count; i++)
                 DirectlyLight[i].LType = LightType.Ambient;
 
             DirectlyLight.Clear();
-            for (int a = 0; a < 360; a++)
+            for (int a = 0; a < 360; )
             {
-                float c = (float)Math.Cos(a / 180.0f * Math.PI);
-                float s = (float)Math.Sin(a / 180.0f * Math.PI);
+                float c = (float)Math.Cos(MathHelper.ToRadians(a));
+                float s = (float)Math.Sin(MathHelper.ToRadians(a));
                 Vector2 ray = new Vector2(c, s);
 
                 for (int r = 1; r < 100; r++)
@@ -124,19 +166,24 @@ namespace darkcave
                     if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                     {
 
-                        if (Data[x, y].Type == NodeType.Earth)
+                        if (ForeGround[x, y].Type == NodeType.Earth)
                         {
-                            Data[x, y].Light = new Vector3(1, 1, 1);
-                            Data[x, y].LType = LightType.Direct;
-                            DirectlyLight.Add(Data[x, y]);
+                            ForeGround[x, y].Diffuse = new Vector3(1, 1, 1);
+                            ForeGround[x, y].LType = LightType.Direct;
+                            DirectlyLight.Add(ForeGround[x, y]);
                         }
                         else
+                        {
+                            //Data[x, y].Diffuse = new Vector3(0.1f, 0.1f, 0.1f);
+                            //Data[x, y].LType = LightType.Direct;
+                            //DirectlyLight.Add(Data[x, y]);
                             continue;
+                        }
                     }
                     goto next;
                 }
             next:
-                continue;
+                a++;
             }
         }
 
@@ -145,7 +192,7 @@ namespace darkcave
 
             if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
             {
-                return Data[x, y];
+                return ForeGround[x, y];
 
             }
 
@@ -154,46 +201,64 @@ namespace darkcave
 
         private void ProprocesDraw()
         {
-            for (int i1 = 0; i1 < X; i1++)
+            for (int i1 = 0; i1 < X; )
             {
                 for (int i2 = Y - 1; i2 >= 0; i2--)
                 {
-                    var node = Data[i1, i2];
-                    node.Light = new Vector3(.4f, .6f, 1);
+                    var node = ForeGround[i1, i2];
+
 
                     if (node.Type != NodeType.Air)
+                    {
+                        node.Ambience = Sky;
                         goto next;
+                    }
                 }
             next:
-                continue;
+                i1++;
             }
         }
 
-        public void Update( Camera cam, Instancer instancer)
+        int start = 0;
+
+        public void Update()
         {
             directLights();
-            for (int i1 = 0; i1 < X; i1++)
-            for (int i2 = 0; i2 < Y; i2++)
+
+            for (int i1 = start; i1 < X; i1 += 2)
             {
-                var node = Data[i1, i2];
+                bool amb = true;
+                for (int i2 = Y - 1; i2 >= 0; i2--)
+                {
+                    var node = ForeGround[i1, i2];
+                    if (amb)
+                    {
+                        
+                        amb = node.Type == NodeType.Air;
+                        if (!amb)
+                            node.Ambience = Sky;
+                    }   
 
-                node.Light = lightUp(node);
 
-                if (cam.Frustrum.Contains(node.Postion) == ContainmentType.Contains)
-                    instancer.AddInstance(node.GetInstanceData());
+                    if (node.LType == LightType.Ambient || node.Type != NodeType.Earth)
+                    {
+                        node.Diffuse = lightUp(node);
+                    }
+                }
             }
+            start ^= 1;
         }
 
-        /*
-        public void AddToDraw()
-        { 
-            for (int i1 = 0; i1 < Size.X; i1++)
-            for (int i2 = 0; i2 < Size.Y; i2++)
-            {
-                var node = Data[i1, i2];
-                
-            }
-        }*/
+        public void AddToDraw(Camera cam, Instancer instancer)
+        {
+            for (int i1 = 0; i1 < X; i1++)
+                for (int i2 = 0; i2 < Y; i2++)
+                {
+                    var node = ForeGround[i1, i2];
 
+                    if (cam.Frustrum.Contains(node.Postion) == ContainmentType.Contains)
+                        instancer.AddInstance(node);
+                }
+        }
     }
 }

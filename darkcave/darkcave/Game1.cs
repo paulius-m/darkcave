@@ -22,6 +22,8 @@ namespace darkcave
         Map map;
         Instancer render;
         Camera cam;
+        Entity player;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -36,90 +38,62 @@ namespace darkcave
             private set;
         }
 
-
-
-
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
             IsMouseVisible = true;
-            render = new Instancer(150*150);
-            map = new Map (new Vector3(150, 150, 0));
+            render = new Instancer(200*100);
+            map = new Map (new Vector3(200, 100, 0));
             cam = new Camera();
+            player = new Entity();
+            player.FuturePosition = new Vector3(70, 70, 0);
             map.Init();
             base.Initialize();
         }
 
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here            
             render.Load();
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
         protected override void UnloadContent()
         {
             // TODO: Unload any non ContentManager content here
         }
 
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
-        /// 
-        int count;
         protected override void Update(GameTime gameTime)
         {
-            // Allows the game to exit
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                this.Exit();
-
-            // TODO: Add your update logic here
-
             MouseState mouse = Mouse.GetState();
 
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
-            map.sun = point;
 
             Node node = map.GetNode((int)point.X, (int) point.Y );
 
-            if (mouse.RightButton == ButtonState.Pressed)
-            {
-                cam.Position = new Vector3(point.X, point.Y, cam.Position.Z);
-            }
-
+            cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
+            map.sun = cam.Target = player.Postion;
 
             if (node != null)
             {
 
                 if (node.Type == NodeType.Air)
-                    node.Light = new Vector3(1,0,0);
+                    node.Diffuse = new Vector3(1,0,0);
 
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
                     node.SetType(NodeType.Air);
+                    node.Ambience = Vector3.Zero;
                 }
 
             }
             render.Reset();
-            map.Update(cam, render);
+
+            player.Update();
+            map.Update();
+
+            node = map.GetNode((int)player.FuturePosition.X, (int)player.FuturePosition.Y);
+
+            //if (node != null && node.Type == NodeType.Earth)
+            //    player.FuturePosition = player.Postion;
 
             base.Update(gameTime);
         }
@@ -132,17 +106,13 @@ namespace darkcave
         }
 
 
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-
+            map.AddToDraw(cam, render);
+            render.AddInstance(player);
+            
             render.Draw(cam);
-
-            //base.Draw(gameTime);
         }
     }
 }
