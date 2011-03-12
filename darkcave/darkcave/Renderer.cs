@@ -19,8 +19,8 @@ namespace darkcave
             new VertexElement(16, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 1),
             new VertexElement(32, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 2),
             new VertexElement(48, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 3),
-            new VertexElement(64, VertexElementFormat.Vector3, VertexElementUsage.Color, 0),
-            new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.Color, 1));
+            new VertexElement(64, VertexElementFormat.Vector3, VertexElementUsage.Color, 1),
+            new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.Color, 2));
 
         public VertexDeclaration VertexDeclaration
         {
@@ -36,6 +36,7 @@ namespace darkcave
     {
         InstanceData GetInstanceData();
     }
+
     class Instancer
     {
         DynamicVertexBuffer instanceVertexBuffer;

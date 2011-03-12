@@ -59,11 +59,11 @@ VertexShaderOutput VertexShaderCommon(VertexShaderInput input, float4x4 instance
 
 // Hardware instancing reads the per-instance world transform from a secondary vertex stream.
 VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
-                                                  float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR0, float3 light: COLOR1)
+                                                  float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR0, float4 light: COLOR2)
 {
 	VertexShaderOutput o = VertexShaderCommon(input, transpose(instanceTransform));
 
-	o.Color.xyz  =  color.xyz * light.xyz;
+	o.Color.xyz  = color.xyz *light.xyz;
 	o.TextureCoordinate = (o.TextureCoordinate)* 0.1f;
 	return o; 
 }
@@ -80,7 +80,7 @@ VertexShaderOutput NoInstancingVertexShader(VertexShaderInput input)
 float4 PixelShaderFunction(VertexShaderOutput input) : COLOR0
 {
     float4 map = tex2D(diffuse, input.TextureCoordinate.xy);
-	 map.xyz *= input.Color.xyz;
+	map.xyz *= input.Color.xyz;
 	return map;
 }
 
