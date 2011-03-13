@@ -28,7 +28,7 @@
       <Processor>EffectProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\InstancedModel.xnb</Output>
-      <Time>2011-03-12T18:06:13.6234504+02:00</Time>
+      <Time>2011-03-13T18:11:42.9743885+02:00</Time>
     </Item>
     <Item>
       <Source>E.png</Source>
@@ -46,10 +46,10 @@
       <Processor>ModelProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\plane2.xnb</Output>
-      <Time>2011-03-12T15:14:02.1237324+02:00</Time>
+      <Time>2011-03-12T19:35:54.0997382+02:00</Time>
       <Dependency>
         <Key>obj\x86\Debug\plane2_0.xml</Key>
-        <Value>2011-03-12T15:14:05.8159436+02:00</Value>
+        <Value>2011-03-12T19:36:03.8812976+02:00</Value>
       </Dependency>
     </Item>
     <Item>
@@ -57,7 +57,7 @@
       <Importer>FbxImporter</Importer>
       <Options>IntermediateFile, DontCacheImportedData</Options>
       <Output>obj\x86\Debug\plane2_0.xml</Output>
-      <Time>2011-03-12T15:14:02.1237324+02:00</Time>
+      <Time>2011-03-12T19:35:54.0997382+02:00</Time>
     </Item>
     <Item>
       <Source>atlas.png</Source>
@@ -66,7 +66,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\atlas.xnb</Output>
-      <Time>2011-03-12T15:32:35.9934421+02:00</Time>
+      <Time>2011-03-13T18:43:33.1646451+02:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>

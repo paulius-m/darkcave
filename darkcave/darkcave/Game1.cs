@@ -47,6 +47,8 @@ namespace darkcave
             cam = new Camera();
             player = new Entity();
             player.FuturePosition = new Vector3(70, 70, 0);
+            player.Texture = new Vector3(0, 2, 0);
+            GraphicsDevice.BlendState = BlendState.AlphaBlend;
             map.Init();
             base.Initialize();
         }

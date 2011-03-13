@@ -12,6 +12,8 @@ namespace darkcave
         public Matrix World;
         public Vector3 Color;
         public Vector3 Light;
+        public Vector3 Texture;
+
 
         private readonly static VertexDeclaration vertexDeclaration = new VertexDeclaration
             (
@@ -20,7 +22,9 @@ namespace darkcave
             new VertexElement(32, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 2),
             new VertexElement(48, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 3),
             new VertexElement(64, VertexElementFormat.Vector3, VertexElementUsage.Color, 1),
-            new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.Color, 2));
+            new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.Color, 2),
+            new VertexElement(88, VertexElementFormat.Vector3, VertexElementUsage.TextureCoordinate, 1)
+            );
 
         public VertexDeclaration VertexDeclaration
         {

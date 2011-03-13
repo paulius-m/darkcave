@@ -15,9 +15,11 @@ texture Texture;
 sampler diffuse = sampler_state
 {
     Texture = (Texture);
-	MinFilter = Linear;
+	MinFilter = Point;
 	MagFilter = Linear;
 	MipFilter = None;
+	AddressU = Clamp;
+	AddressV = Clamp;
 };
 
 
@@ -59,12 +61,12 @@ VertexShaderOutput VertexShaderCommon(VertexShaderInput input, float4x4 instance
 
 // Hardware instancing reads the per-instance world transform from a secondary vertex stream.
 VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
-                                                  float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR0, float4 light: COLOR2)
+                                                  float4x4 instanceTransform : BLENDWEIGHT, float3 color: COLOR1, float3 light: COLOR2, float3 text : TEXCOORD1)
 {
 	VertexShaderOutput o = VertexShaderCommon(input, transpose(instanceTransform));
 
 	o.Color.xyz  = color.xyz *light.xyz;
-	o.TextureCoordinate = (o.TextureCoordinate)* 0.1f;
+	o.TextureCoordinate = (text + o.TextureCoordinate)* 0.1f;
 	return o; 
 }
 

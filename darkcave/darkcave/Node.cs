@@ -31,7 +31,7 @@ namespace darkcave
         public Vector3 Diffuse;
         public Vector3 Ambience;
         public LightType LType;
-
+        public Vector3 Texture;
         protected InstanceData Instance;
 
         public Node()
@@ -45,7 +45,10 @@ namespace darkcave
                 return;
             Type = newType;
             if (Type == NodeType.Air)
+            {
                 Color = Vector3.One;
+                Texture = new Vector3(0,1,0);
+            }
         }
 
         public void SetPosition(Vector3 pos)
@@ -58,7 +61,7 @@ namespace darkcave
         {
             Instance.Color = Color;
             Instance.Light = Diffuse + Ambience;
-            
+            Instance.Texture = Texture;
             return Instance;
         }
     }

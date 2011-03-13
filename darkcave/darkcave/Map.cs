@@ -53,7 +53,7 @@ namespace darkcave
 
                 node.SetType(NodeType.Earth);
                 node.SetPosition(new Vector3(i1, i3, 0));
-                node.Color = new Vector3(0, .5f, 0.0f);
+                node.Color = new Vector3(0, .1f, 0.0f);
 
                 ForeGround[i1, i3] = node;
             }
@@ -84,10 +84,16 @@ namespace darkcave
                     node.SetPosition(new Vector3(i1, i2, 0));
 
                     if (node.Type == NodeType.Earth)
+                    {
                         node.Color = new Vector3(.4f, .2f, 0.1f);
-                    
+                        node.Texture = new Vector3(1, 0, 0);
+                    }
+
                     if (node.Type == NodeType.Air)
-                        node.Color = new Vector3( (float)noise);
+                    {
+                        node.Color = new Vector3((float)noise * 2);
+                        node.Texture = new Vector3(0,0,0);
+                    }
 
                     ForeGround[i1, i2] = node;
                 }
