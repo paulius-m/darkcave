@@ -42,13 +42,14 @@ namespace darkcave
         {
             // TODO: Add your initialization logic here
             IsMouseVisible = true;
-            render = new Instancer(200*100);
+            render = new Instancer(20010);
             map = new Map (new Vector3(200, 100, 0));
             cam = new Camera();
             player = new Entity();
-            player.FuturePosition = new Vector3(70, 70, 0);
+            player.FuturePosition = new Vector3(100, 99, 0);
             player.Texture = new Vector3(0, 2, 0);
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
+            GraphicsDevice.DepthStencilState = DepthStencilState.None;
             map.Init();
             base.Initialize();
         }
@@ -72,13 +73,13 @@ namespace darkcave
             Node node = map.GetNode((int)point.X, (int) point.Y );
 
             cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
-            map.sun = cam.Target = player.Postion;
+            map.sun.Position = cam.Target = player.Postion;
 
             if (node != null)
             {
 
-                if (node.Type == NodeType.Air)
-                    node.Diffuse = new Vector3(1,0,0);
+                //if (node.Type == NodeType.Air)
+                    //node.Diffuse = new Vector3(1,0,0);
 
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
@@ -90,12 +91,16 @@ namespace darkcave
             render.Reset();
 
             player.Update();
-            map.Update();
-
-            node = map.GetNode((int)player.FuturePosition.X, (int)player.FuturePosition.Y);
-
-            //if (node != null && node.Type == NodeType.Earth)
-            //    player.FuturePosition = player.Postion;
+            map.Update(cam);
+            node = map.Collides(player);
+            if (node != null)
+            {
+                player.FuturePosition.Y = player.Postion.Y;
+                if (map.Collides(player)!=null)
+                {
+                    player.FuturePosition.X = player.Postion.X;   
+                }
+            }
 
             base.Update(gameTime);
         }
@@ -110,7 +115,7 @@ namespace darkcave
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            //GraphicsDevice.Clear( ClearOptions.Target, Color.CornflowerBlue);
             map.AddToDraw(cam, render);
             render.AddInstance(player);
             

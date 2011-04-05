@@ -16,7 +16,7 @@ sampler diffuse = sampler_state
 {
     Texture = (Texture);
 	MinFilter = Point;
-	MagFilter = Linear;
+	MagFilter = Point;
 	MipFilter = None;
 	AddressU = Clamp;
 	AddressV = Clamp;
@@ -65,7 +65,7 @@ VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
 {
 	VertexShaderOutput o = VertexShaderCommon(input, transpose(instanceTransform));
 
-	o.Color.xyz  = color.xyz *light.xyz;
+	o.Color.xyz  = color.xyz * light.xyz;
 	o.TextureCoordinate = (text + o.TextureCoordinate)* 0.1f;
 	return o; 
 }

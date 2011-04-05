@@ -153,9 +153,20 @@ namespace darkcave
             int i;
             for (i = 0; i < octaves; i++)
             {
-                value += Next2D( x * Math.Pow(2, i), y * Math.Pow(2, i));
+                value += Math.Abs( Next2D( x * Math.Pow(2, i), y * Math.Pow(2, i)));
             }
             return value;
         }
+
+        public static double NextOctave1D(int octaves, double x, double drag)
+        {
+            double value = 0.0;
+            for (int i = 0; i < octaves; i++)
+            {
+                value += Next2D(x * Math.Pow(drag, i), 0);
+            }
+            return value;
+        }
+
     }
 }

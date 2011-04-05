@@ -9,6 +9,7 @@ namespace darkcave
     public enum NodeType
     {
         Air = 0,
+        Soil,
         Earth,
         Water,
         Fire
@@ -33,6 +34,8 @@ namespace darkcave
         public LightType LType;
         public Vector3 Texture;
         protected InstanceData Instance;
+        public Vector3 Size = Vector3.One;
+        public BoundingBox CollisionBox;
 
         public Node()
         {
@@ -55,6 +58,10 @@ namespace darkcave
         {
             Postion = pos;
             Instance.World = Matrix.CreateTranslation(pos);
+            var minV = new Vector3(pos.X - Size.X/2, pos.Y - Size.Y/2, 0);
+            var maxV = new Vector3(pos.X + Size.X / 2, pos.Y + Size.Y / 2, 0);
+
+            CollisionBox = new BoundingBox(minV, maxV);
         }
 
         public InstanceData GetInstanceData()

@@ -28,7 +28,7 @@
       <Processor>EffectProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\InstancedModel.xnb</Output>
-      <Time>2011-03-13T18:11:42.9743885+02:00</Time>
+      <Time>2011-03-22T21:01:00.8688977+02:00</Time>
     </Item>
     <Item>
       <Source>E.png</Source>
@@ -66,7 +66,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\atlas.xnb</Output>
-      <Time>2011-03-13T18:43:33.1646451+02:00</Time>
+      <Time>2011-03-15T22:12:26.5224284+02:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
