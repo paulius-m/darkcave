@@ -10,8 +10,14 @@ namespace darkcave
     class Entity : Node, Instanced
     {
 
-        public Vector3 FuturePosition;
-        public float Speed = 0.2f;
+        public Vector3 Speed;
+
+        public float MaxSpeed = 0.1f;
+        public float Gravity = 0.05f;
+
+        public bool InJump;
+
+
         public Entity()
         {
             Diffuse = Vector3.One;
@@ -22,8 +28,8 @@ namespace darkcave
         {
             get
             {
-                var minV = new Vector3(FuturePosition.X - Size.X / 2, FuturePosition.Y - Size.Y / 2, 0);
-                var maxV = new Vector3(FuturePosition.X + Size.X / 2, FuturePosition.Y + Size.Y / 2, 0);
+                var minV = new Vector3(Postion.X - Size.X, Postion.Y - Size.Y, 0);
+                var maxV = new Vector3(Postion.X + Size.X, Postion.Y + Size.Y, 0);
 
                 return new BoundingBox(minV, maxV);
             }
@@ -31,8 +37,8 @@ namespace darkcave
         }
 
 
-        public void Update()
-        {
+        public void Move()
+        {            
             Keys[] keys = Keyboard.GetState().GetPressedKeys();
 
             for (int i = 0; i < keys.Length; i++)
@@ -40,27 +46,36 @@ namespace darkcave
                 switch (keys[i])
                 {
                     case Keys.W:
-                        FuturePosition.Y += Speed;
+                        Speed.Y += MaxSpeed;
                         break;
                     case Keys.S:
-                        FuturePosition.Y -= Speed;
+                        Speed.Y -= MaxSpeed;
                         break;
                     case Keys.A:
-                        FuturePosition.X -= Speed;
+                        Speed.X -= MaxSpeed;
                         break;
                     case Keys.D:
-                        FuturePosition.X += Speed;
+                        Speed.X += MaxSpeed;
+                        break;
+                    case Keys.Space:
+                        Speed.Y += MaxSpeed * 2;
                         break;
                 }
             }
-
-            FuturePosition.Y -= 0.2f;
+            Speed.Y -= Gravity;
         }
-        
+
         InstanceData Instanced.GetInstanceData()
         {
-            SetPosition(FuturePosition);
+
             return base.GetInstanceData();
+        }
+
+        public void Update()
+        {
+           SetPosition(Postion + Speed);
+
+           Speed.X *= 0.5f;
         }
     }
 }

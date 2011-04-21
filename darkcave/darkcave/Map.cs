@@ -52,10 +52,9 @@ namespace darkcave
                     Value = noise,
                 };
 
-                node.SetType(NodeType.Soil);
+                node.SetType(NodeType.Get(NodeTypes.Soil));
                 node.SetPosition(new Vector3(i1, i3, 0));
-                node.Color = new Vector3(0, .5f, 0.0f);
-                node.Texture = new Vector3(2, 0, 0);
+
                 ForeGround[i1, i3] = node;
 
                 for (int i2 = 0; i2< i3 - 3; i2++)
@@ -67,20 +66,15 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(noise < 0.6f ? NodeType.Earth : NodeType.Air);
+                    node.SetType(NodeType.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
-                    if (node.Type == NodeType.Earth)
-                    {
-                        node.Color = new Vector3(.4f, .2f, 0.1f);
-                        node.Texture = new Vector3(1, 0, 0);
-                    }
 
-                    if (node.Type == NodeType.Air)
-                    {
-                        node.Color = new Vector3((float)noise * 2);
-                        node.Texture = new Vector3(0,0,0);
-                    }
+                    //if (node.Type == NodeTypes.Air)
+                    //{
+                    //    node.Color = new Vector3((float)noise * 2);
+                    //    node.Texture = new Vector3(0,0,0);
+                    //}
 
                     ForeGround[i1, i2] = node;
                 }
@@ -92,12 +86,10 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(NodeType.Earth);
+                    node.SetType( NodeType.Get(NodeTypes.Earth));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
-                        node.Color = new Vector3(.4f, .2f, 0.1f);
-                        node.Texture = new Vector3(1, 0, 0);
-                        ForeGround[i1, i2] = node;
+                    ForeGround[i1, i2] = node;
                 }
 
 
@@ -110,10 +102,10 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(NodeType.Air);
+                    node.SetType(NodeType.Get(NodeTypes.Air));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
-                    node.Texture = new Vector3(2, 1, 0);
+                    //node.Texture = new Vector3(2, 1, 0);
                     node.Ambience = Sky;
                     ForeGround[i1, i2] = node;
                 }
@@ -137,16 +129,16 @@ namespace darkcave
                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                 {
                     Node hit = ForeGround[x, y];
-                    switch(ForeGround[x, y].Type)
+                    switch(ForeGround[x, y].Type.Type)
                     {
-                        case NodeType.Soil:
-                        case NodeType.Earth:
+                        case NodeTypes.Soil:
+                        case NodeTypes.Earth:
                         {
-                            sum2 += (hit.Diffuse * hit.Color + hit.Ambience * hit.Color*2);
+                            sum2 += (hit.Diffuse * hit.Type.Color + hit.Ambience * hit.Type.Color*2);
                             count2++;
                             break;
                         }
-                        case NodeType.Air:
+                        case NodeTypes.Air:
                         {
                             sum += hit.Diffuse;
                             count++;
@@ -162,7 +154,7 @@ namespace darkcave
                 }
             }
 
-            if (node.Type == NodeType.Air || ((node.Type == NodeType.Soil || node.Type == NodeType.Earth  )))
+            if (node.Type.Type == NodeTypes.Air || ((node.Type.Type == NodeTypes.Soil || node.Type.Type == NodeTypes.Earth  )))
             {
                 count += count2;
                 sum += sum2;
@@ -204,7 +196,7 @@ namespace darkcave
                     var node = ForeGround[i1, i2];
 
 
-                    if (node.Type != NodeType.Air)
+                    if (node.Type.Type != NodeTypes.Air)
                     {
                         node.Ambience = Sky;
                         goto next;
@@ -232,12 +224,12 @@ namespace darkcave
                     var node = ForeGround[i1, i2];
                     if (amb)
                     {
-                        amb = node.Type == NodeType.Air;
+                        amb = node.Type.Type == NodeTypes.Air;
                         if (!amb)
                             node.Ambience = Sky;
                     }
 
-                    if (node.LType == LightType.Ambient || node.Type != NodeType.Earth)
+                    if (node.LType == LightType.Ambient || node.Type.Type != NodeTypes.Earth)
                     {
                         node.Diffuse = lightUp(node);
                     }
@@ -247,25 +239,36 @@ namespace darkcave
 
         public Node Collides(Entity ent)
         {
-            int minX = (int)(ent.FuturePosition.X - 1);
-            int maxX = (int)(ent.FuturePosition.X + 2);
-            int minY = (int)(ent.FuturePosition.Y - 1);
-            int maxY = (int)(ent.FuturePosition.Y + 2);
+            var dir = Vector3.Normalize(ent.Speed);
+            var len = ent.Speed.Length();
+            for (int r = 0; r < len + 1; r++)
+            { 
+                var dist = (r>len?len:r) * dir;
+                var box = new BoundingBox(ent.CollisionBox.Min + dist, ent.CollisionBox.Max + dist);
+
+                int minX = (int)box.Min.X - 1;
+                int maxX = (int)box.Max.X + 2;
+                int minY = (int)box.Min.Y - 1;
+                int maxY = (int)box.Max.Y + 2;
+
+                if (minX < 0) minX = 0;
+                if (minY < 0) minY = 0;
+                if (maxX >X ) maxX = X;
+                if (maxY >= Y) maxY = Y;
+                for (int i1 = minX; i1 < maxX; i1++)
+                    for (int i2 = minY; i2 < maxY; i2++)
+                    {
+                        var node = ForeGround[i1, i2];
+
+                        if (node.Type.Type == NodeTypes.Air)
+                            continue;
+
+                        if (node.CollisionBox.Intersects(box))
+                            return node;
+                    }
+            }
 
 
-            minX = minX < 0 ? 0 : minX;
-            maxX = maxX >= X ? X : maxX;
-
-            minY = minY < 0 ? 0 : minY;
-            maxY = maxY >= Y ?Y : maxY;
-
-            for (int i1 = minX; i1< maxX; i1++)
-                for (int i2 = minY; i2 < maxY; i2++)
-                {
-                    var node = ForeGround[i1, i2];
-                    if ( node.Type != NodeType.Air && node.CollisionBox.Intersects(ent.FutureCollisionBox))
-                        return node;
-                }
             return null;
         }
 
@@ -275,8 +278,11 @@ namespace darkcave
                 for (int i2 = 0; i2 < Y; i2++)
                 {
                     var node = ForeGround[i1, i2];
+
+                    if (node.Type.Type == NodeTypes.Air)
+                        continue;
                     var testres =  cam.Frustrum.Contains(node.CollisionBox);
-                    if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains)
+                    if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains )
                         instancer.AddInstance(node);
                 }
         }

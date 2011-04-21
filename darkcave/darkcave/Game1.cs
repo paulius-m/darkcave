@@ -46,8 +46,9 @@ namespace darkcave
             map = new Map (new Vector3(200, 100, 0));
             cam = new Camera();
             player = new Entity();
-            player.FuturePosition = new Vector3(100, 99, 0);
-            player.Texture = new Vector3(0, 2, 0);
+            player.Postion = new Vector3(70, 90, 0);
+            player.SetType(new  NodeType {Texture = new Vector3(0, 2, 0)});
+
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
             map.Init();
@@ -83,24 +84,35 @@ namespace darkcave
 
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    node.SetType(NodeType.Air);
+                    node.SetType(NodeType.Get( NodeTypes.Air));
                     node.Ambience = Vector3.Zero;
                 }
 
             }
             render.Reset();
 
-            player.Update();
             map.Update(cam);
+            player.Move();
             node = map.Collides(player);
             if (node != null)
             {
-                player.FuturePosition.Y = player.Postion.Y;
-                if (map.Collides(player)!=null)
+                node.Diffuse = new Vector3(1,0,0);
+                var delta = (player.Postion + player.Speed - node.Postion);
+                delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
+                var nV = Vector3.Dot(delta, player.Speed);
+
+                player.Speed -= MathHelper.Min(nV, 0) * delta;
+                node = map.Collides(player);
+                if (node !=null)
                 {
-                    player.FuturePosition.X = player.Postion.X;   
+                    delta = (player.Postion + player.Speed - node.Postion);
+                    delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
+                    nV = Vector3.Dot(delta, player.Speed);
+
+                    player.Speed -= MathHelper.Min(nV, 0) * delta;
                 }
             }
+            player.Update();
 
             base.Update(gameTime);
         }

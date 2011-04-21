@@ -50,7 +50,7 @@ namespace darkcave
 
             Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), AspectRatio, 1.0f, 1000.0f);
 
-            position = new Vector3(50, 50, 30);
+            position = new Vector3(50, 50, 15);
             target = new Vector3(30, 30, 0);
             updateView();
         }
