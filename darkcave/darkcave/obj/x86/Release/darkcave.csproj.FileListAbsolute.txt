@@ -1,0 +1,11 @@
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\Box.xnb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\plane2.xnb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\InstancedModel.xnb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\E.xnb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\atlas.xnb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\darkcave.exe
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\darkcave.pdb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\ResolveAssemblyReference.cache
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\Microsoft.Xna.Framework.RuntimeProfile.txt
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\darkcave.exe
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\darkcave.pdb
