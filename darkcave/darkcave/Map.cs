@@ -70,12 +70,6 @@ namespace darkcave
 
                     node.SetPosition(new Vector3(i1, i2, 0));
 
-                    //if (node.Type == NodeTypes.Air)
-                    //{
-                    //    node.Color = new Vector3((float)noise * 2);
-                    //    node.Texture = new Vector3(0,0,0);
-                    //}
-
                     ForeGround[i1, i2] = node;
                 }
 
@@ -105,13 +99,10 @@ namespace darkcave
                     node.SetType(NodeType.Get(NodeTypes.Air));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
-                    //node.Texture = new Vector3(2, 1, 0);
                     node.Ambience = Sky;
                     ForeGround[i1, i2] = node;
                 }
             }
-
-            //ProprocesDraw();
         }
 
         readonly Vector2[] Rays = new Vector2[] { new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(1, -1), new Vector2(0, -1), new Vector2(-1, -1), new Vector2(-1, 0), new Vector2(-1, 1) };
@@ -228,49 +219,68 @@ namespace darkcave
                         if (!amb)
                             node.Ambience = Sky;
                     }
-
-                    if (node.LType == LightType.Ambient || node.Type.Type != NodeTypes.Earth)
-                    {
                         node.Diffuse = lightUp(node);
-                    }
                 }
             }
         }
 
-        public Node Collides(Entity ent)
+        public Tuple<Node, Vector3> ResolveCollisions(Entity ent)
         {
+
+            System.IO.File.AppendAllText("D:\\1.txt", string.Format("pos: {0} {1}", ent.Postion, ent.Speed));
             var dir = Vector3.Normalize(ent.Speed);
             var len = ent.Speed.Length();
-            for (int r = 0; r < len + 1; r++)
+
+            for (float r = 1; r < len + 1; r+=1f)
             { 
                 var dist = (r>len?len:r) * dir;
                 var box = new BoundingBox(ent.CollisionBox.Min + dist, ent.CollisionBox.Max + dist);
 
-                int minX = (int)box.Min.X - 1;
-                int maxX = (int)box.Max.X + 2;
+                int minX = (int)box.Min.X ;
+                int maxX = (int)box.Max.X + 1;
                 int minY = (int)box.Min.Y - 1;
-                int maxY = (int)box.Max.Y + 2;
+                int maxY = (int)box.Max.Y + 1;
 
                 if (minX < 0) minX = 0;
                 if (minY < 0) minY = 0;
                 if (maxX >X ) maxX = X;
                 if (maxY >= Y) maxY = Y;
+
+                //Console.WriteLine("minmax: {0} {1} {2} {3}", minX, minY, maxX, maxY);
                 for (int i1 = minX; i1 < maxX; i1++)
                     for (int i2 = minY; i2 < maxY; i2++)
                     {
+                        //Console.WriteLine("{0} {1}", i1, i2 );
+                        
                         var node = ForeGround[i1, i2];
 
                         if (node.Type.Type == NodeTypes.Air)
                             continue;
 
                         if (node.CollisionBox.Intersects(box))
-                            return node;
+                        {
+                            System.IO.File.AppendAllText("D:\\1.txt", string.Format(" colided {0} \n", node.Postion));
+                            uncollide(ent, node, dist);
+                            //return Tuple.Create(node, dist);
+                            
+                        }
                     }
             }
 
-
-            return null;
+            System.IO.File.AppendAllText("D:\\1.txt", "\n");
+            return Tuple.Create<Node, Vector3>(null, Vector3.Zero);
         }
+
+        private void uncollide(Entity player, Node node, Vector3 speed)
+        {
+            node.Diffuse = new Vector3(1, 0, 0);
+            var delta = (player.Postion + speed - node.Postion);
+            delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
+            var nV = Vector3.Dot(delta, player.Speed);
+
+            player.Speed -= MathHelper.Min(nV, 0) * delta;
+        }
+
 
         public void AddToDraw(Camera cam, Instancer instancer)
         {

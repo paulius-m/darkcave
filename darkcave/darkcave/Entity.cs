@@ -21,7 +21,7 @@ namespace darkcave
         public Entity()
         {
             Diffuse = Vector3.One;
-            Size = Size * 0.9f;
+            
         }
 
         public BoundingBox FutureCollisionBox
