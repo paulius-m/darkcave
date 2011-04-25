@@ -21,7 +21,7 @@ namespace darkcave
         public Entity()
         {
             Diffuse = Vector3.One;
-            
+            Size.X *= 0.9f;
         }
 
         public BoundingBox FutureCollisionBox
@@ -76,6 +76,8 @@ namespace darkcave
            SetPosition(Postion + Speed);
 
            Speed.X *= 0.5f;
+           if (Math.Abs(Speed.X) < 0.001f)
+               Speed.X = 0;
         }
     }
 }

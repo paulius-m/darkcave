@@ -62,9 +62,13 @@ namespace darkcave
         protected override void UnloadContent()
         {
         }
-
+        int c = 0;
         protected override void Update(GameTime gameTime)
         {
+            c++;
+            //if (c < 10)
+                //return;
+            c = 0;
             MouseState mouse = Mouse.GetState();
 
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));

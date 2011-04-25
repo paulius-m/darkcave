@@ -224,21 +224,20 @@ namespace darkcave
             }
         }
 
-        public Tuple<Node, Vector3> ResolveCollisions(Entity ent)
+        public void ResolveCollisions(Entity ent)
         {
 
             System.IO.File.AppendAllText("D:\\1.txt", string.Format("pos: {0} {1}", ent.Postion, ent.Speed));
             var dir = Vector3.Normalize(ent.Speed);
             var len = ent.Speed.Length();
-
             for (float r = 1; r < len + 1; r+=1f)
-            { 
+            {
                 var dist = (r>len?len:r) * dir;
                 var box = new BoundingBox(ent.CollisionBox.Min + dist, ent.CollisionBox.Max + dist);
 
-                int minX = (int)box.Min.X ;
-                int maxX = (int)box.Max.X + 1;
-                int minY = (int)box.Min.Y - 1;
+                int minX = (int)box.Min.X - 1;
+                int maxX = (int)box.Max.X + 2;
+                int minY = (int)box.Min.Y;
                 int maxY = (int)box.Max.Y + 1;
 
                 if (minX < 0) minX = 0;
@@ -246,12 +245,10 @@ namespace darkcave
                 if (maxX >X ) maxX = X;
                 if (maxY >= Y) maxY = Y;
 
-                //Console.WriteLine("minmax: {0} {1} {2} {3}", minX, minY, maxX, maxY);
-                for (int i1 = minX; i1 < maxX; i1++)
+                
                     for (int i2 = minY; i2 < maxY; i2++)
+                        for (int i1 = minX; i1 < maxX; i1++)
                     {
-                        //Console.WriteLine("{0} {1}", i1, i2 );
-                        
                         var node = ForeGround[i1, i2];
 
                         if (node.Type.Type == NodeTypes.Air)
@@ -259,16 +256,19 @@ namespace darkcave
 
                         if (node.CollisionBox.Intersects(box))
                         {
-                            System.IO.File.AppendAllText("D:\\1.txt", string.Format(" colided {0} \n", node.Postion));
+                            //System.IO.File.AppendAllText("D:\\1.txt", string.Format(" colided {0} \n", node.Postion));
                             uncollide(ent, node, dist);
-                            //return Tuple.Create(node, dist);
-                            
+                            dir = Vector3.Normalize(ent.Speed);
+                            len = ent.Speed.Length();
+                            dist = (r > len ? len : r) * dir;
+                            if (len == 0)
+                                goto end;
                         }
                     }
-            }
 
-            System.IO.File.AppendAllText("D:\\1.txt", "\n");
-            return Tuple.Create<Node, Vector3>(null, Vector3.Zero);
+            }
+        end:
+            return;
         }
 
         private void uncollide(Entity player, Node node, Vector3 speed)
@@ -276,9 +276,9 @@ namespace darkcave
             node.Diffuse = new Vector3(1, 0, 0);
             var delta = (player.Postion + speed - node.Postion);
             delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
-            var nV = Vector3.Dot(delta, player.Speed);
+            var nV = Vector3.Dot(delta, speed);
 
-            player.Speed -= MathHelper.Min(nV, 0) * delta;
+            player.Speed = speed - MathHelper.Min(nV, 0) * delta;
         }
 
 

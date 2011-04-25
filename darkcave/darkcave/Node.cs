@@ -84,7 +84,7 @@ namespace darkcave
         {
             Postion = pos;
             Instance.World = Matrix.CreateTranslation(pos);
-            var minV = new Vector3(pos.X - Size.X/2, pos.Y - Size.Y/2, 0);
+            var minV = new Vector3(pos.X - Size.X / 2, pos.Y - Size.Y / 2, 0);
             var maxV = new Vector3(pos.X + Size.X / 2, pos.Y + Size.Y / 2, 0);
 
             CollisionBox = new BoundingBox(minV, maxV);
