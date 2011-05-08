@@ -15,7 +15,7 @@ namespace darkcave
 
         public Light sun;
 
-        private Vector3 Sky = new Vector3(.4f, .6f, 1);
+        private Vector3 Sky = new Vector3(1, 1, 1);
 
         public Node[][,] Data;
 
@@ -66,7 +66,7 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(NodeType.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air));
+                    node.SetType(NodeType.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air, true));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
 
@@ -96,7 +96,7 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(NodeType.Get(NodeTypes.Air));
+                    node.SetType(NodeType.Get(NodeTypes.Air, false));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
                     node.Ambience = Sky;
@@ -179,13 +179,11 @@ namespace darkcave
 
         private void ProprocesDraw()
         {
-            //return;
             for (int i1 = 0; i1 < X; )
             {
                 for (int i2 = Y - 1; i2 >= 0; i2--)
                 {
                     var node = ForeGround[i1, i2];
-
 
                     if (node.Type.Type != NodeTypes.Air)
                     {
@@ -219,6 +217,7 @@ namespace darkcave
                         if (!amb)
                             node.Ambience = Sky;
                     }
+                    if (node.LType!= LightType.Direct)
                         node.Diffuse = lightUp(node);
                 }
             }
@@ -226,8 +225,6 @@ namespace darkcave
 
         public void ResolveCollisions(Entity ent)
         {
-
-            System.IO.File.AppendAllText("D:\\1.txt", string.Format("pos: {0} {1}", ent.Postion, ent.Speed));
             var dir = Vector3.Normalize(ent.Speed);
             var len = ent.Speed.Length();
             for (float r = 1; r < len + 1; r+=1f)
@@ -237,8 +234,8 @@ namespace darkcave
 
                 int minX = (int)box.Min.X - 1;
                 int maxX = (int)box.Max.X + 2;
-                int minY = (int)box.Min.Y;
-                int maxY = (int)box.Max.Y + 1;
+                int minY = (int)box.Min.Y - 1;
+                int maxY = (int)box.Max.Y + 2;
 
                 if (minX < 0) minX = 0;
                 if (minY < 0) minY = 0;
@@ -246,41 +243,28 @@ namespace darkcave
                 if (maxY >= Y) maxY = Y;
 
                 
-                    for (int i2 = minY; i2 < maxY; i2++)
-                        for (int i1 = minX; i1 < maxX; i1++)
+                for (int i2 = minY; i2 < maxY; i2++)
+                    for (int i1 = minX; i1 < maxX; i1++)
+                {
+                    var node = ForeGround[i1, i2];
+
+                    if (! node.Type.CanCollide)
+                        continue;
+
+                    if (node.CollisionBox.Intersects(box))
                     {
-                        var node = ForeGround[i1, i2];
-
-                        if (node.Type.Type == NodeTypes.Air)
-                            continue;
-
-                        if (node.CollisionBox.Intersects(box))
-                        {
-                            //System.IO.File.AppendAllText("D:\\1.txt", string.Format(" colided {0} \n", node.Postion));
-                            uncollide(ent, node, dist);
-                            dir = Vector3.Normalize(ent.Speed);
-                            len = ent.Speed.Length();
-                            dist = (r > len ? len : r) * dir;
-                            if (len == 0)
-                                goto end;
-                        }
+                        node.ResolveCollision(ent, dist);
+                        dir = Vector3.Normalize(ent.Speed);
+                        len = ent.Speed.Length();
+                        dist = (r > len ? len : r) * dir;
+                        if (len == 0)
+                            goto end;
                     }
-
-            }
+                }
+        }
         end:
             return;
         }
-
-        private void uncollide(Entity player, Node node, Vector3 speed)
-        {
-            node.Diffuse = new Vector3(1, 0, 0);
-            var delta = (player.Postion + speed - node.Postion);
-            delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
-            var nV = Vector3.Dot(delta, speed);
-
-            player.Speed = speed - MathHelper.Min(nV, 0) * delta;
-        }
-
 
         public void AddToDraw(Camera cam, Instancer instancer)
         {
@@ -289,11 +273,12 @@ namespace darkcave
                 {
                     var node = ForeGround[i1, i2];
 
-                    if (node.Type.Type == NodeTypes.Air)
-                        continue;
-                    var testres =  cam.Frustrum.Contains(node.CollisionBox);
-                    if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains )
-                        instancer.AddInstance(node);
+                    if (node.Type.CanRender)
+                    {
+                        var testres = cam.Frustrum.Contains(node.CollisionBox);
+                        if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains)
+                            instancer.AddInstance(node);
+                    }
                 }
         }
     }

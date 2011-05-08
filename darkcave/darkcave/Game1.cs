@@ -72,10 +72,10 @@ namespace darkcave
             MouseState mouse = Mouse.GetState();
 
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
-
+            map.sun.Position = cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
             Node node = map.GetNode((int)point.X, (int) point.Y );
 
-
+            cam.Target = player.Postion;
 
             if (node != null)
             {
@@ -85,7 +85,7 @@ namespace darkcave
 
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    node.SetType(NodeType.Get( NodeTypes.Air));
+                    node.SetType(NodeType.Get( NodeTypes.Air, new Vector3(0,1,0)));
                     node.Ambience = Vector3.Zero;
                 }
 
@@ -98,8 +98,8 @@ namespace darkcave
 
             player.Update();
 
-            cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
-            map.sun.Position = cam.Target = player.Postion;
+
+
 
             base.Update(gameTime);
         }
@@ -117,6 +117,7 @@ namespace darkcave
         protected override void Draw(GameTime gameTime)
         {
             //GraphicsDevice.Clear( ClearOptions.Target, Color.CornflowerBlue);
+
             map.AddToDraw(cam, render);
             render.AddInstance(player);
             

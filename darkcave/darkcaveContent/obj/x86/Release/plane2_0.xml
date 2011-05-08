@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<XnaContent xmlns:Graphics="Microsoft.Xna.Framework.Content.Pipeline.Graphics" xmlns:Framework="Microsoft.Xna.Framework">
+  <Asset Type="Graphics:MeshContent">
+    <Name>Box01</Name>
+    <Identity>
+      <SourceFilename>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcaveContent\plane2.FBX</SourceFilename>
+      <SourceTool>FbxImporter</SourceTool>
+    </Identity>
+    <Transform>100 0 0 0 0 2.83276955E-14 -100 0 0 100 2.83276955E-14 0 0 0 0 1</Transform>
+    <Positions>0.5000001 -0.5011569 -0.006787658 -0.499999881 -0.501157165 -0.006787658 0.5000001 -0.5011569 0.00678771641 -0.499999881 -0.501157165 0.00678771641 0.499999881 0.4988429 -0.006787658 -0.5000001 0.498842657 -0.006787658 0.499999881 0.4988429 0.006787687 -0.5000001 0.498842657 0.006787687</Positions>
+    <Geometry>
+      <Batch>
+        <Material>#Resource1</Material>
+        <Indices>2 1 0 0 3 2 6 5 4 4 7 6</Indices>
+        <Vertices>
+          <PositionIndices>0 1 5 4 3 2 6 7</PositionIndices>
+          <Channels>
+            <VertexChannel Name="Normal0" ElementType="Framework:Vector3">0 0 -1 0 0 -1 0 0 -1 0 0 -1 -6.21725063E-15 2.93366682E-08 1 -6.21725063E-15 2.93366682E-08 1 -6.21725063E-15 2.93366682E-08 1 -6.21725063E-15 2.93366682E-08 1</VertexChannel>
+            <VertexChannel Name="TextureCoordinate0" ElementType="Framework:Vector2">0.999500453 0.9995005 0.0004995465 0.9995005 0.0004995465 0.0004994869 0.999500453 0.0004994869 0.0004995465 0.9995005 0.999500453 0.9995005 0.999500453 0.0004994869 0.0004995465 0.0004994869</VertexChannel>
+            <VertexChannel Name="Color0" ElementType="Framework:Vector4">1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</VertexChannel>
+          </Channels>
+        </Vertices>
+      </Batch>
+    </Geometry>
+  </Asset>
+  <Resources>
+    <Resource ID="#Resource1" Type="Graphics:BasicMaterialContent">
+      <Name>01 - Default</Name>
+      <Identity>
+        <SourceFilename>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcaveContent\plane2.FBX</SourceFilename>
+        <SourceTool>FbxImporter</SourceTool>
+      </Identity>
+      <OpaqueData>
+        <Data Key="DiffuseColor" Type="Framework:Vector3">0.5882353 0.5882353 0.5882353</Data>
+        <Data Key="EmissiveColor" Type="Framework:Vector3">0 0 0</Data>
+        <Data Key="Alpha" Type="float">1</Data>
+        <Data Key="SpecularColor" Type="Framework:Vector3">0 0 0</Data>
+        <Data Key="SpecularPower" Type="float">1.99999988</Data>
+      </OpaqueData>
+    </Resource>
+  </Resources>
+</XnaContent>

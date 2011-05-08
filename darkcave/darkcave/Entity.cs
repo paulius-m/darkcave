@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace darkcave
 {
-    class Entity : Node, Instanced
+    public class Entity : Node, Instanced
     {
 
         public Vector3 Speed;
@@ -46,10 +46,10 @@ namespace darkcave
                 switch (keys[i])
                 {
                     case Keys.W:
-                        Speed.Y += MaxSpeed;
+                        //Speed.Y += MaxSpeed;
                         break;
                     case Keys.S:
-                        Speed.Y -= MaxSpeed;
+                        //Speed.Y -= MaxSpeed;
                         break;
                     case Keys.A:
                         Speed.X -= MaxSpeed;
@@ -58,7 +58,8 @@ namespace darkcave
                         Speed.X += MaxSpeed;
                         break;
                     case Keys.Space:
-                        Speed.Y += MaxSpeed * 2;
+                        if (Speed.Y == 0)
+                            Speed.Y += MaxSpeed * 4;
                         break;
                 }
             }
