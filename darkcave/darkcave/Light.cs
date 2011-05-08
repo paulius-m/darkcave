@@ -34,7 +34,7 @@ namespace darkcave
 
                         if (ForeGround[x, y].Type.Type != NodeTypes.Air)
                         {
-                            ForeGround[x, y].Diffuse = new Vector3(.5f, .5f, 0.5f);
+                            ForeGround[x, y].Diffuse = new Vector3(1, 1, 1);
                             ForeGround[x, y].LType = LightType.Direct;
                             DirectlyLight.Add(ForeGround[x, y]);
                         }

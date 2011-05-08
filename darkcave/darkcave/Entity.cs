@@ -12,16 +12,27 @@ namespace darkcave
 
         public Vector3 Speed;
 
-        public float MaxSpeed = 0.1f;
+        public float MaxSpeedX = 0.05f;
+        public float MaxSpeedY = 0.4f;
         public float Gravity = 0.05f;
 
         public bool InJump;
+
+        public Animation Frames;
+        public float RotationX;
 
 
         public Entity()
         {
             Diffuse = Vector3.One;
             Size.X *= 0.9f;
+            Frames = new Animation
+            {
+                Frames ={
+                            { "run", new AnimationFrame{ Texture = new Vector3(0, 2, 1), Position = new Vector3(0, 2, 1), Count = 2 } },
+                            { "idle", new AnimationFrame{ Texture = new Vector3 (0, 2, 0), Position = new Vector3(0, 2, 0), Count = 1 } }
+                        }
+            };
         }
 
         public BoundingBox FutureCollisionBox
@@ -38,7 +49,7 @@ namespace darkcave
 
 
         public void Move()
-        {            
+        {
             Keys[] keys = Keyboard.GetState().GetPressedKeys();
 
             for (int i = 0; i < keys.Length; i++)
@@ -52,24 +63,48 @@ namespace darkcave
                         //Speed.Y -= MaxSpeed;
                         break;
                     case Keys.A:
-                        Speed.X -= MaxSpeed;
+                        Speed.X -= MaxSpeedX;
+                        RotationX = MathHelper.Pi;
                         break;
                     case Keys.D:
-                        Speed.X += MaxSpeed;
+                        Speed.X += MaxSpeedX;
+                        RotationX = 0;
                         break;
                     case Keys.Space:
                         if (Speed.Y == 0)
-                            Speed.Y += MaxSpeed * 4;
+                            Speed.Y += MaxSpeedY;
                         break;
                 }
             }
+            if (Speed.X != 0)
+                Frames.SetActive("run");
+            else
+                Frames.SetActive("idle");
+
+            Frames.Active.Update();
+
             Speed.Y -= Gravity;
         }
 
         InstanceData Instanced.GetInstanceData()
         {
+            Instance.Color = Type.Color;
+            Instance.Light = Diffuse + Ambience;
+            Instance.Texture = Frames.Active.Texture;
+            return Instance;
+        }
 
-            return base.GetInstanceData();
+
+        public void SetPosition(Vector3 pos)
+        {
+            Postion = pos;
+
+            var minV = new Vector3(pos.X - Size.X / 2, pos.Y - Size.Y / 2, 0);
+            var maxV = new Vector3(pos.X + Size.X / 2, pos.Y + Size.Y / 2, 0);
+
+            CollisionBox = new BoundingBox(minV, maxV);
+            Instance.World = Matrix.CreateRotationY(RotationX) * Matrix.CreateTranslation(pos);
+
         }
 
         public void Update()
