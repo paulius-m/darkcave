@@ -27,56 +27,94 @@ namespace darkcave
     {
         public NodeTypes Type;
         public Vector3 Color = Vector3.One;
-        public Vector3 Texture;
+        public virtual Vector3 Texture
+        {
+            get;
+            set;
+        }
         public bool CanCollide = true;
         public bool CanRender = true;
         public delegate void Collision(Node node, Entity player, Vector3 speed);
         public Collision ResolveCollision;
+    }
+
+    public class AnimatedNode : NodeType
+    {
+        public override Vector3 Texture
+        {
+            get
+            {
+                return Animation.Active.Texture;
+            }
+            set
+            {
+            }
+        }
+        
+        public Animation Animation;
+    }
 
 
+    public static class NodeFactory
+    {
+
+        private static NodeType soil;
         public static NodeType Get(NodeTypes type)
         {
-            var o = new NodeType();
-            o.Type = type;
+            NodeType o = null;
+            
 
             switch (type)
-            { 
+            {
                 case NodeTypes.Earth:
+                    o = new NodeType();
                     o.Color = new Vector3(.6f, .4f, 0.3f);
                     o.Texture = new Vector3(1, 0, 0);
                     o.ResolveCollision = HardCollision;
                     break;
                 case NodeTypes.Soil:
-                    o.Color = new Vector3(.2f, 0.5f, 0.0f);
-                    o.Texture = new Vector3(2, 0, 0);
-                    o.ResolveCollision = HardCollision;
-                    o.CanCollide = false;
+                    if (soil == null)
+                    {
+                        soil = new AnimatedNode
+                            {
+                                Animation = new Animation
+                                {
+                                    Active = new AnimationFrame() { Position = new Vector3(2, 0, 0), Texture = new Vector3(2, 0, 0), Count = 4 }
+                                }
+                            };
+                        soil.Color = new Vector3(.2f, 0.5f, 0.0f);
+                        soil.ResolveCollision = HardCollision;
+                        soil.CanCollide = false;
+                    }
+                    o = soil;
                     break;
                 case NodeTypes.Air:
+                    o = new NodeType();
                     o.Color = Vector3.One;
-                    o.Texture = new Vector3(0,0,0);
+                    o.Texture = new Vector3(0, 0, 0);
                     o.CanCollide = false;
                     o.CanRender = false;
                     break;
             }
+            o.Type = type;
             return o;
         }
 
         public static NodeType Get(NodeTypes type, bool renderable)
         {
-            var o = NodeType.Get(type);
+            var o = NodeFactory.Get(type);
             o.CanRender = renderable;
             return o;
         }
         public static NodeType Get(NodeTypes type, Vector3 texture)
         {
-            var o = NodeType.Get(type);
+            var o = NodeFactory.Get(type);
             o.CanRender = true;
             o.Texture = texture;
             return o;
         }
 
-        protected static void HardCollision(Node node, Entity player, Vector3 speed)
+        public static void HardCollision(Node node, Entity player, Vector3 speed)
         {
             node.Diffuse = new Vector3(1, 0, 0);
             var delta = (player.Postion + speed - node.Postion);
@@ -86,7 +124,7 @@ namespace darkcave
             player.Speed = speed - MathHelper.Min(nV, 0) * delta;
         }
 
-        protected static void Slowdown(Node node, Entity player, Vector3 speed)
+        public static void Slowdown(Node node, Entity player, Vector3 speed)
         {
             player.Speed = speed / 2;
         }

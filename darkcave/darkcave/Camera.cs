@@ -11,11 +11,7 @@ namespace darkcave
     {
         public float AspectRatio;
         public Matrix Projection;
-        public Matrix View
-        {
-            get;
-            private set;
-        }
+        public Matrix View;
 
         private Viewport view;
 
@@ -48,9 +44,9 @@ namespace darkcave
             view = Game1.Instance.GraphicsDevice.Viewport;
             AspectRatio = graphics.GraphicsDevice.Viewport.Width * 1.0f / graphics.GraphicsDevice.Viewport.Height;
 
-            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), AspectRatio, 1.0f, 1000.0f);
+            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(30.0f), AspectRatio, 1.0f, 1000.0f);
 
-            position = new Vector3(50, 50,20);
+            position = new Vector3(50, 50,15);
             target = new Vector3(30, 30, 0);
             updateView();
         }

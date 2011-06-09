@@ -13,8 +13,8 @@ namespace darkcave
         public Vector3 Speed;
 
         public float MaxSpeedX = 0.05f;
-        public float MaxSpeedY = 0.4f;
-        public float Gravity = 0.05f;
+        public float MaxSpeedY = 0.2f;
+        public float Gravity = 0.01f;
 
         public bool InJump;
 
@@ -29,9 +29,9 @@ namespace darkcave
             Frames = new Animation
             {
                 Frames ={
-                            { "run", new AnimationFrame{ Texture = new Vector3(0, 2, 1), Position = new Vector3(0, 2, 1), Count = 2 } },
-                            { "idle", new AnimationFrame{ Texture = new Vector3 (0, 2, 0), Position = new Vector3(0, 2, 0), Count = 1 } }
-                        }
+                    { "run", new AnimationFrame{ Texture = new Vector3(0, 3, 0), Position = new Vector3(0, 3, 0), Count = 8 , Delay = 5} },
+                    { "idle", new AnimationFrame{ Texture = new Vector3 (0, 2, 0), Position = new Vector3(0, 2, 0), Count = 1 } }
+                }
             };
         }
 
@@ -81,7 +81,7 @@ namespace darkcave
             else
                 Frames.SetActive("idle");
 
-            Frames.Active.Update();
+            //Frames.Active.Update();
 
             Speed.Y -= Gravity;
         }

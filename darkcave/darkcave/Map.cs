@@ -52,7 +52,7 @@ namespace darkcave
                     Value = noise,
                 };
 
-                node.SetType(NodeType.Get(NodeTypes.Soil));
+                node.SetType(NodeFactory.Get(NodeTypes.Soil));
                 node.SetPosition(new Vector3(i1, i3, 0));
 
                 ForeGround[i1, i3] = node;
@@ -66,7 +66,7 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(NodeType.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air, true));
+                    node.SetType(NodeFactory.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air, true));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
 
@@ -80,7 +80,7 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType( NodeType.Get(NodeTypes.Earth));
+                    node.SetType(NodeFactory.Get(NodeTypes.Earth));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
                     ForeGround[i1, i2] = node;
@@ -96,7 +96,7 @@ namespace darkcave
                         Value = noise,
                     };
 
-                    node.SetType(NodeType.Get(NodeTypes.Air, false));
+                    node.SetType(NodeFactory.Get(NodeTypes.Air, false));
 
                     node.SetPosition(new Vector3(i1, i2, 0));
                     node.Ambience = Sky;

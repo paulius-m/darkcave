@@ -17,7 +17,7 @@ namespace darkcave
                 DirectlyLight[i].LType = LightType.Ambient;
 
             DirectlyLight.Clear();
-            for (int a = 0; a < 360; )
+            for (int a = 0; a < 180; )
             {
                 //TODO: move to table
                 float c = (float)Math.Cos(MathHelper.ToRadians(a));

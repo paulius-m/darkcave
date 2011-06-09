@@ -41,7 +41,7 @@ namespace darkcave
         protected override void Initialize()
         {
             IsMouseVisible = true;
-            render = new Instancer(20010);
+            render = new Instancer(200010);
             map = new Map (new Vector3(400, 100, 0));
             cam = new Camera();
             player = new Entity();
@@ -62,13 +62,9 @@ namespace darkcave
         protected override void UnloadContent()
         {
         }
-        int c = 0;
+
         protected override void Update(GameTime gameTime)
         {
-            c++;
-            //if (c < 10)
-                //return;
-            c = 0;
             MouseState mouse = Mouse.GetState();
 
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
@@ -79,16 +75,11 @@ namespace darkcave
 
             if (node != null)
             {
-
-                //if (node.Type == NodeType.Air)
-                    //node.Diffuse = new Vector3(1,0,0);
-
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    node.SetType(NodeType.Get( NodeTypes.Air, new Vector3(0,1,0)));
+                    node.SetType(NodeFactory.Get(NodeTypes.Air, new Vector3(0, 1, 0)));
                     node.Ambience = Vector3.Zero;
                 }
-
             }
             render.Reset();
 
@@ -97,9 +88,6 @@ namespace darkcave
             map.ResolveCollisions(player);
 
             player.Update();
-
-
-
 
             base.Update(gameTime);
         }
@@ -116,11 +104,10 @@ namespace darkcave
 
         protected override void Draw(GameTime gameTime)
         {
-            //GraphicsDevice.Clear( ClearOptions.Target, Color.CornflowerBlue);
-
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            
             map.AddToDraw(cam, render);
             render.AddInstance(player);
-            
             render.Draw(cam);
         }
     }
