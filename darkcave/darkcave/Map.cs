@@ -15,7 +15,7 @@ namespace darkcave
 
         public Light sun;
 
-        private Vector3 Sky = new Vector3(1, 1, 1);
+        private Vector3 Sky = new Vector3(.6f, .6f, 1);
 
         public Node[][,] Data;
 
@@ -35,7 +35,7 @@ namespace darkcave
             Data[1] = new Node[X, Y];
 
             ForeGround = Data[0];
-            sun = new Light { Position = new Vector3(0, 99, 0) };
+            sun = new Light { Position = new Vector3(50, 50, 0) };
             int i3 = 50;
             for (int i1 = 0; i1 < X; i1++)
             {
@@ -129,7 +129,7 @@ namespace darkcave
                             count2++;
                             break;
                         }
-                        case NodeTypes.Air:
+                        default:
                         {
                             sum += hit.Diffuse;
                             count++;
@@ -145,11 +145,8 @@ namespace darkcave
                 }
             }
 
-            if (node.Type.Type == NodeTypes.Air || ((node.Type.Type == NodeTypes.Soil || node.Type.Type == NodeTypes.Earth  )))
-            {
                 count += count2;
                 sum += sum2;
-            }
 
 
             if (count == 0)
@@ -208,14 +205,20 @@ namespace darkcave
             for (int i1 = startX; i1 < endX; i1++)
             {
                 bool amb = true;
+                float  ambIntencity = 1;
                 for (int i2 = Y - 1; i2 >= endY; i2--)
                 {
                     var node = ForeGround[i1, i2];
+
                     if (amb)
                     {
-                        amb = node.Type.Type == NodeTypes.Air;
-                        if (!amb)
-                            node.Ambience = Sky;
+                        if (node.Type.Opacity != 0)
+                        {
+                            node.Ambience = Sky * ambIntencity;
+                            ambIntencity -= node.Type.Opacity;
+                            if (ambIntencity <= 0)
+                                amb = false;
+                        }
                     }
                     if (node.LType!= LightType.Direct)
                         node.Diffuse = lightUp(node);

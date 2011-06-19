@@ -34,6 +34,9 @@ namespace darkcave
         }
         public bool CanCollide = true;
         public bool CanRender = true;
+
+        public float Opacity;
+
         public delegate void Collision(Node node, Entity player, Vector3 speed);
         public Collision ResolveCollision;
     }
@@ -59,6 +62,7 @@ namespace darkcave
     {
 
         private static NodeType soil;
+        private static NodeType water;
         public static NodeType Get(NodeTypes type)
         {
             NodeType o = null;
@@ -71,6 +75,7 @@ namespace darkcave
                     o.Color = new Vector3(.6f, .4f, 0.3f);
                     o.Texture = new Vector3(1, 0, 0);
                     o.ResolveCollision = HardCollision;
+                    o.Opacity = 1.0f;
                     break;
                 case NodeTypes.Soil:
                     if (soil == null)
@@ -85,6 +90,7 @@ namespace darkcave
                         soil.Color = new Vector3(.2f, 0.5f, 0.0f);
                         soil.ResolveCollision = HardCollision;
                         soil.CanCollide = false;
+                        soil.Opacity = 0.5f;
                     }
                     o = soil;
                     break;
@@ -94,6 +100,28 @@ namespace darkcave
                     o.Texture = new Vector3(0, 0, 0);
                     o.CanCollide = false;
                     o.CanRender = false;
+                    break;
+
+                case NodeTypes.Water:
+                    if (water == null)
+                    {
+                        water = new AnimatedNode
+                        {
+                            Animation = new Animation
+                            {
+                                Active = new AnimationFrame() { Position = new Vector3(0, 4, 0), Texture = new Vector3(0, 4, 0), Count = 8 }
+                            }
+                        };
+                        water.CanCollide = false;
+                        water.CanRender = true;
+                        water.Color = new Vector3(0.5f, 0.5f, 1);
+                        water.ResolveCollision = Slowdown;
+                        water.Opacity = 0.05f;
+                    }
+                    o = water;
+                    break;
+                default:
+                    o = new NodeType();
                     break;
             }
             o.Type = type;
