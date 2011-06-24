@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 
 namespace darkcave
 {
-    class Light
+    class PointLight
     {
         public Vector3 Position;
         private List<Node> DirectlyLight = new List<Node>();
@@ -17,6 +17,7 @@ namespace darkcave
                 DirectlyLight[i].LType = LightType.Ambient;
 
             DirectlyLight.Clear();
+
             for (int a = 0; a < 360; a++)
             {
                 //TODO: move to table
@@ -45,5 +46,14 @@ namespace darkcave
                 }
             }
         }
+    }
+
+    public class SkyLight
+    {
+        public List<Node> DirectlyLight = new List<Node>();
+        private int[] heights;
+
+
+
     }
 }

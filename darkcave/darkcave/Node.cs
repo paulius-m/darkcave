@@ -166,6 +166,7 @@ namespace darkcave
         public double Value;
 
         public Vector3 Postion;
+        public int Updated;
 
         public Vector3 Diffuse;
         public Vector3 Ambience;

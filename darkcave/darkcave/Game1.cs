@@ -63,12 +63,14 @@ namespace darkcave
         {
         }
 
+        NodeTypes newNodeType = NodeTypes.Water;
+
         protected override void Update(GameTime gameTime)
         {
             MouseState mouse = Mouse.GetState();
 
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
-            cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
+            map.sun.Position = cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
             Node node = map.GetNode((int)point.X, (int) point.Y );
 
             cam.Target = player.Postion;
@@ -77,8 +79,12 @@ namespace darkcave
             {
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    node.SetType(NodeFactory.Get(NodeTypes.Water, new Vector3(0, 1, 0)));
+                    node.SetType(NodeFactory.Get(newNodeType));
                     node.Ambience = Vector3.Zero;
+                }
+                else if (mouse.RightButton == ButtonState.Pressed)
+                {
+                    newNodeType = node.Type.Type;
                 }
             }
             render.Reset();
@@ -94,11 +100,11 @@ namespace darkcave
 
 
 
-        Vector3 getMapPoint(Vector3 mouseRay)
+        Vector3 getMapPoint(Ray mouseRay)
         {
-            float t = -cam.Position.Z / mouseRay.Z;
+            float t = -cam.Position.Z / mouseRay.Position.Z;
 
-            return new Vector3(cam.Position.X + t * mouseRay.X, cam.Position.Y + t * mouseRay.Y, 0);
+            return new Vector3(mouseRay.Position.X + t * mouseRay.Direction.X, mouseRay.Position.Y + t * mouseRay.Direction.Y, 0);
         }
 
 

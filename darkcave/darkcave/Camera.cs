@@ -39,23 +39,22 @@ namespace darkcave
 
         public Camera()
         {
-            
             GraphicsDeviceManager graphics = Game1.Instance.graphics;
             view = Game1.Instance.GraphicsDevice.Viewport;
             AspectRatio = graphics.GraphicsDevice.Viewport.Width * 1.0f / graphics.GraphicsDevice.Viewport.Height;
 
-            Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(30.0f), AspectRatio, 1.0f, 1000.0f);
+            Projection = Matrix.CreateOrthographic(graphics.GraphicsDevice.Viewport.Width / 32 ,graphics.GraphicsDevice.Viewport.Height /32, 1.0f, 1000.0f);
 
-            position = new Vector3(50, 50,30);
+            position = new Vector3(50, 50,40);
             target = new Vector3(30, 30, 0);
             updateView();
         }
 
-        public Vector3 Unproject(int mouseX, int mouseY)
+        public Ray Unproject(int mouseX, int mouseY)
         {
             Vector3 near = view.Unproject(new Vector3(mouseX, mouseY, 0), Projection, View, Matrix.Identity);
             Vector3 far = view.Unproject(new Vector3(mouseX, mouseY, 1), Projection, View, Matrix.Identity);
-            return Vector3.Normalize(far - near);
+            return new Ray(near,Vector3.Normalize(far - near));
         }
 
     }
