@@ -109,6 +109,7 @@
   <ItemGroup>
     <Compile Include="Animation.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="Decal.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="Map.cs" />

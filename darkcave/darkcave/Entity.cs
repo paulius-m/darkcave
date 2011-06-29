@@ -86,16 +86,16 @@ namespace darkcave
             Speed.Y -= Gravity;
         }
 
-        InstanceData Instanced.GetInstanceData()
+        void Instanced.GetInstanceData( Instancer instancer)
         {
             Instance.Color = Type.Color;
             Instance.Light = Diffuse + Ambience;
             Instance.Texture = Frames.Active.Texture;
-            return Instance;
+            instancer.AddInstance(Instance);
         }
 
 
-        public void SetPosition(Vector3 pos)
+        public new void SetPosition(Vector3 pos)
         {
             Postion = pos;
 

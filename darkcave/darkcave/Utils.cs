@@ -163,7 +163,7 @@ namespace darkcave
             double value = 0.0;
             for (int i = 0; i < octaves; i++)
             {
-                value += Next2D(x * Math.Pow(drag, i), 0);
+                value += Next2D(x * Math.Pow(drag, i), 6);
             }
             return value;
         }

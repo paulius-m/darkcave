@@ -6,12 +6,19 @@ using Microsoft.Xna.Framework;
 
 namespace darkcave
 {
-    class PointLight
+
+    public interface ILight
+    {
+        void Update(Node[,] ForeGround, int X, int Y, BoundingBox area);
+    }
+    
+    
+    class PointLight : ILight
     {
         public Vector3 Position;
         private List<Node> DirectlyLight = new List<Node>();
 
-        public void Update(Node[,] ForeGround, int X, int Y)
+        public void Update(Node[,] ForeGround, int X, int Y, BoundingBox area)
         {
             for (int i = 0; i < DirectlyLight.Count; i++)
                 DirectlyLight[i].LType = LightType.Ambient;
@@ -48,12 +55,38 @@ namespace darkcave
         }
     }
 
-    public class SkyLight
+    public class SkyLight : ILight
     {
+        public Vector3 Color;
+        
         public List<Node> DirectlyLight = new List<Node>();
-        private int[] heights;
+
+        public void Update(Node[,] ForeGround, int X, int Y, BoundingBox area)
+        {
+            for (int i = 0; i < DirectlyLight.Count; i++)
+                DirectlyLight[i].LType = LightType.Ambient;
+
+            DirectlyLight.Clear();
+
+
+            for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
+            {
+                float ambIntencity = 1;
+                for (int i2 = (int)area.Max.Y - 1; i2 >= area.Min.Y; i2--)
+                {
+                    var node = ForeGround[i1, i2];
+                    if (node.Type.Opacity != 0 && ambIntencity > 0)
+                    {
+                        node.Ambience = Color * ambIntencity;
+                        ambIntencity -= node.Type.Opacity;
+                        DirectlyLight.Add(node);
+                        node.LType = LightType.Direct;
+                    }
+                }
+            }
 
 
 
+        }
     }
 }

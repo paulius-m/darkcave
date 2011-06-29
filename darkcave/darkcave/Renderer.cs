@@ -14,7 +14,6 @@ namespace darkcave
         public Vector3 Light;
         public Vector3 Texture;
 
-
         private readonly static VertexDeclaration vertexDeclaration = new VertexDeclaration
             (
             new VertexElement(0, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 0),
@@ -35,13 +34,12 @@ namespace darkcave
         }
     }
 
-
     public interface Instanced
     {
-        InstanceData GetInstanceData();
+        void GetInstanceData(Instancer instancer);
     }
 
-    class Instancer
+    public class Instancer
     {
         DynamicVertexBuffer instanceVertexBuffer;
         
@@ -71,7 +69,12 @@ namespace darkcave
 
         public void AddInstance(Instanced instance)
         {
-            instances[instanceCount++] = instance.GetInstanceData();
+            instance.GetInstanceData(this);
+        }
+
+        public void AddInstance(InstanceData data)
+        {
+            instances[instanceCount++] = data;
         }
 
         public void Reset()

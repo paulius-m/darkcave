@@ -70,7 +70,7 @@ namespace darkcave
             MouseState mouse = Mouse.GetState();
 
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
-            map.sun.Position = cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
+            cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
             Node node = map.GetNode((int)point.X, (int) point.Y );
 
             cam.Target = player.Postion;
@@ -80,7 +80,6 @@ namespace darkcave
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
                     node.SetType(NodeFactory.Get(newNodeType));
-                    node.Ambience = Vector3.Zero;
                 }
                 else if (mouse.RightButton == ButtonState.Pressed)
                 {

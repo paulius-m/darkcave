@@ -14,8 +14,7 @@ namespace darkcave
         private readonly int Y;
 
         public PointLight sun;
-
-        private Vector3 Sky = new Vector3(.6f, .6f, 1);
+        public SkyLight sky;
 
         public Node[][,] Data;
 
@@ -37,14 +36,15 @@ namespace darkcave
             Data[1] = new Node[X, Y];
 
             ForeGround = Data[0];
-            sun = new PointLight { Position = new Vector3(50, 50, 0) };
+            sun = new PointLight { Position = new Vector3(50, 90, 0) };
+            sky = new SkyLight { Color = new Vector3(.6f, .6f, 1) };
             int i3 = 50;
             for (int i1 = 0; i1 < X; i1++)
             {
                 double x = i1 / Size.X;
                     
                 double noise = Noise.NextOctave1D(1, -x, 0) / 2 + 0.5f;
-                double noise2 = Math.Abs(Noise.NextOctave1D(2, x, 5)) / 10;
+                double noise2 = Math.Abs(Noise.NextOctave1D(4, x, 2.5f)) / 10;
 
                 noise = MathHelper.Clamp( (float) (noise + noise2), 0, 1);
                 i3 = (int)(noise * (Y -1));
@@ -54,8 +54,8 @@ namespace darkcave
                     Value = noise,
                 };
 
-                node.SetType(NodeFactory.Get(NodeTypes.Soil));
                 node.SetPosition(new Vector3(i1, i3, 0));
+                node.SetType( NodeFactory.Get(NodeTypes.Earth).AddDecals(DecalFactory.Get(DecalType.Grass)) );
 
                 ForeGround[i1, i3] = node;
 
@@ -108,7 +108,7 @@ namespace darkcave
         }
 
         readonly Vector2[] Rays = new Vector2[] { new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(1, -1), new Vector2(0, -1), new Vector2(-1, -1), new Vector2(-1, 0), new Vector2(-1, 1) };
-        private Vector3 lightUp (Node node)
+        private void lightUp (Node node)
         {           
             Vector3 sum = new Vector3();
             Vector3 sum2 = new Vector3();
@@ -122,22 +122,9 @@ namespace darkcave
                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                 {
                     Node hit = ForeGround[x, y];
-                    switch (hit.Type.Type)
-                    {
-                        case NodeTypes.Soil:
-                        case NodeTypes.Earth:
-                        {
-                            sum2 += (hit.Diffuse * hit.Type.Color + hit.Ambience);
-                            count2++;
-                            break;
-                        }
-                        default:
-                        {
-                            sum += hit.Diffuse;
-                            count++;
-                            break;
-                        }
-                    }
+                    sum += hit.GetLightColor();
+                    sum2 += hit.GetAmbientColor();
+                    count++;
                 }
                 else
                 {
@@ -147,20 +134,17 @@ namespace darkcave
                 }
             }
 
-            count += count2;
-            sum += sum2;
-
-            if (count == 0)
-                return sum;
-
-            return (sum / (float)count);
+            node.Diffuse = (sum / (float)(count ==0?1:count));
+            node.Ambience = (sum2 / (float)(count == 0 ? 1 : count));
         }
 
         List<Node> DirectlyLight = new List<Node>();
 
-        private void directLights()
+        private void directLights(int startX, int endX, int startY, int endY )
         {
-            sun.Update(ForeGround, X, Y);
+            var area = new BoundingBox(new Vector3(startX, startY, 0), new Vector3(endX, endY, 0));
+            sun.Update(ForeGround, X, Y, area);
+            sky.Update(ForeGround, X, Y, area);
         }
 
         public Node GetNode(int x, int y)
@@ -174,50 +158,20 @@ namespace darkcave
             return null;
         }
 
-        private void ProprocesDraw()
-        {
-            for (int i1 = 0; i1 < X; )
-            {
-                for (int i2 = Y - 1; i2 >= 0; i2--)
-                {
-                    var node = ForeGround[i1, i2];
-
-                    if (node.Type.Type != NodeTypes.Air)
-                    {
-                        node.Ambience = Sky;
-                        goto next;
-                    }
-                    //node.Ambience = Sky;
-                }
-            next:
-                i1++;
-            }
-        }
-
         public void Update(Camera cam)
         {
-            directLights();
-            for (int i = 0; i < DirectlyLight.Count; i++)
-                DirectlyLight[i].Ambience = Vector3.Zero;
-            DirectlyLight.Clear();
             int startX = (int)MathHelper.Clamp(cam.Position.X - 30, 0, X);
             int endX = (int)MathHelper.Clamp(cam.Position.X + 30, 0, X);
-            int endY = (int)MathHelper.Clamp(cam.Position.Y - 20, 0, Y);
+            int endY = (int)MathHelper.Clamp(cam.Position.Y - 30, 0, Y);
+            directLights(startX, endX, endY, Y);
 
             for (int i1 = startX; i1 < endX; i1++)
             {
-                float  ambIntencity = 1;
                 for (int i2 = Y - 1; i2 >= endY; i2--)
                 {
                     var node = ForeGround[i1, i2];
-                    if (node.Type.Opacity != 0 && ambIntencity > 0)
-                    {
-                        node.Ambience = Sky * ambIntencity;
-                        ambIntencity -= node.Type.Opacity;
-                        DirectlyLight.Add(node);
-                    }
                     if (node.LType!= LightType.Direct)
-                        node.Diffuse = lightUp(node);
+                        lightUp(node);
 
                     if (node.Type.Type == NodeTypes.Water)
                     {
@@ -236,17 +190,18 @@ namespace darkcave
 
         private void UpdateWater(Node node)
         {
-            int r = rand.Next(2);
+            int r = rand.Next(100)%2;
             for (int i = 0; i < 5; i++)
             {
                 var downNode = ForeGround[(int)MathHelper.Clamp(node.Postion.X + waterX[r, i], 0, X - 1), (int) MathHelper.Clamp(node.Postion.Y + waterY[i], 0, Y - 1)];
                 if (downNode.Type.Type == NodeTypes.Air)
                 {
-                    var temp = downNode.Type;
+                    var temp = node.Type;
 
-                    downNode.SetType(node.Type);
-                    node.SetType(temp);
-                    node.Updated = 5;
+                    node.SetType(temp.OldNodeType);
+                    downNode.SetType(temp);
+
+                    downNode.Updated = 10;
                     return;
                 }
             }
