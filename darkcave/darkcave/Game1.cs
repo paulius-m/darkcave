@@ -21,6 +21,7 @@ namespace darkcave
 
         Map map;
         Instancer render;
+        Instancer playerRender;
         Camera cam;
         Entity player;
 
@@ -42,6 +43,7 @@ namespace darkcave
         {
             IsMouseVisible = true;
             render = new Instancer(200010);
+            playerRender = new Instancer(1, "char1");
             map = new Map (new Vector3(400, 100, 0));
             cam = new Camera();
             player = new Entity();
@@ -57,6 +59,7 @@ namespace darkcave
         protected override void LoadContent()
         {
             render.Load();
+            playerRender.Load();
         }
 
         protected override void UnloadContent()
@@ -72,8 +75,12 @@ namespace darkcave
             Vector3 point = getMapPoint(cam.Unproject(mouse.X, mouse.Y));
             cam.Position = new Vector3(player.Postion.X, player.Postion.Y, cam.Position.Z);
             Node node = map.GetNode((int)point.X, (int) point.Y );
-
             cam.Target = player.Postion;
+
+            if (gameTime.IsRunningSlowly)
+                player.Diffuse = new Vector3(1, 0, 0);
+            else
+                player.Diffuse = Vector3.One;
 
             if (node != null)
             {
@@ -87,7 +94,7 @@ namespace darkcave
                 }
             }
             render.Reset();
-
+            playerRender.Reset();
             map.Update(cam);
             player.Move();
             map.ResolveCollisions(player);
@@ -112,8 +119,9 @@ namespace darkcave
             GraphicsDevice.Clear(Color.CornflowerBlue);
             
             map.AddToDraw(cam, render);
-            render.AddInstance(player);
+            playerRender.AddInstance(player);
             render.Draw(cam);
+            playerRender.Draw(cam);
         }
     }
 }

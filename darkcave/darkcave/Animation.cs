@@ -6,60 +6,145 @@ using Microsoft.Xna.Framework;
 
 namespace darkcave
 {
-    public class AnimationFrame
+    public class Animation
     {
         public Vector3 Position;
         public int Count;
         public Vector3 Texture = Vector3.Zero;
 
-        private int current;
+        protected int Current;
         private int step;
+
         public int Delay = 10;
+
         public void Update()
+        {
+            if (Wait())
+                return;
+
+            Texture.X = (Position.X + Current);
+            Texture.Y = Position.Y;
+            NextFrame();
+
+            if (EndFrame())
+                Reset();
+        }
+
+        protected virtual bool EndFrame()
+        {
+            return Current >= Count;
+        }
+
+        protected bool Wait()
         {
             step++;
             if (step < Delay)
-                return;
+                return true;
             step = 0;
-
-            Texture.X = (Position.X + current);
-            Texture.Y = Position.Y;
-            current++;
-            if (current >= Count)
-                current = 0;
+            return false;
         }
 
-        public void Reset()
+        protected virtual void NextFrame()
         {
-            current = 0;
+            Current++;
+        }
+
+
+        public virtual void Reset()
+        {
+            Current = 0;
         }
     }
 
-    public class Animation
+    public class TransitionAnimation : Animation
     {
-        public Dictionary<string, AnimationFrame> Frames = new Dictionary<string,AnimationFrame>();
+        public delegate void AnimationEvent();
+        public AnimationEvent Event;
+        public AnimationEvent End;
+        public int EventFrame;
 
-        public AnimationFrame Active;
+        protected override void NextFrame()
+        {
+            if (Current == EventFrame && Event != null)
+                Event();
+            base.NextFrame();
+        }
 
-        public Animation()
+        public override void Reset()
+        {
+            base.Reset();
+            End();
+        }
+
+    }
+
+    public class AnimationSet
+    {
+        public Dictionary<string, Animation> Frames = new Dictionary<string, Animation>();
+
+        public Animation Active;
+
+        public AnimationSet()
         {
             AnimationSystem.Instance.Add(this);
+        }
+
+        protected AnimationSet(bool none)
+        { 
+        
+        }
+
+        private string active;
+        public string ActiveAnimation
+        {
+            get { return active; }
+            set {  SetActive(value); }
         }
 
         public void SetActive(string name)
         {
             Active = Frames[name];
+            active = name;
         }
 
-        internal void Update()
+        internal virtual void Update()
         {
             Active.Update();
         }
     }
 
+
+    public class ActiveAnimationSet : AnimationSet
+    {
+        public ActiveAnimationSet()
+        {
+
+        }
+
+        internal override void Update()
+        {
+            foreach (var frame in Frames.Values)
+                frame.Update();
+        }
+    }
+
+    public class PassiveAnimationSet : AnimationSet
+    {
+        public PassiveAnimationSet() : base (false)
+        {
+
+        }
+
+        internal override void Update()
+        {
+
+        }
+    }
+
+
     public class AnimationSystem : GameComponent
     {
-        private List<Animation> Animations = new List<Animation>();
+        private List<AnimationSet> Animations = new List<AnimationSet>();
         public AnimationSystem()
             : base(Game1.Instance)
         {
@@ -87,7 +172,7 @@ namespace darkcave
                 anim.Update();
         }
 
-        public void Add(Animation anim )
+        public void Add(AnimationSet anim )
         {
             Animations.Add(anim);
         }

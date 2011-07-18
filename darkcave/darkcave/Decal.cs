@@ -62,7 +62,7 @@ namespace darkcave
             }
         }
 
-        public Animation Animation;
+        public AnimationSet Animation;
     }
 
 
@@ -75,9 +75,9 @@ namespace darkcave
 
     public static class DecalFactory
     {
-        private static Animation GrassAnimation = new Animation
+        private static AnimationSet GrassAnimation = new AnimationSet
         {
-            Active = new AnimationFrame() { Position = new Vector3(2, 0, 0), Texture = new Vector3(2, 0, 0), Count = 4 }
+            Active = new Animation() { Position = new Vector3(9, 0, 0), Texture = new Vector3(9, 0, 0), Count = 4 }
         };
         public static IDecal Get(DecalType type)
         {

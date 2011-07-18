@@ -15,14 +15,6 @@ namespace darkcave
         Fire
     }
 
-    public enum LightType
-    {
-        None = 0,
-        Ambient,
-        Direct
-    }
-
-
     public class NodeType
     {
         public NodeTypes Type;
@@ -59,6 +51,13 @@ namespace darkcave
             foreach (var dec in Decals)
                 dec.Init(node);
         }
+
+
+        public Dictionary<string, Vector3> Textures = new Dictionary<string,Vector3>();
+        public virtual void SetTexture(string name)
+        {
+            Texture = Textures[name];
+        }
     }
 
     public class AnimatedNode : NodeType
@@ -74,21 +73,29 @@ namespace darkcave
             }
         }
         
-        public Animation Animation;
+        public AnimationSet Animation;
+
+        public override void SetTexture(string name)
+        {
+            if (name[3] == '1')
+                Animation.SetActive("1");
+            else if (name[1] == '1')
+                Animation.SetActive("0");
+            else Animation.SetActive("10");
+        }
     }
 
     public static class NodeFactory
     {
-
-        private static Animation soilAnim = new Animation
-        {
-            Active = new AnimationFrame() { Position = new Vector3(2, 0, 0), Texture = new Vector3(2, 0, 0), Count = 4 }
-        };
-
-        private static Animation waterAnim = new Animation
-        {
-            Active = new AnimationFrame() { Position = new Vector3(0, 4, 0), Texture = new Vector3(0, 4, 0), Count = 8 }
-        };
+        private static AnimationSet waterAnims = new ActiveAnimationSet
+                        {
+                            Frames = { 
+                                    { "1", new Animation { Position = new Vector3(1, 1, 0), Texture = new Vector3(1, 1, 0), Count = 8, Delay = 10} },
+                                    { "0", new Animation { Position = new Vector3(1, 0, 0), Texture = new Vector3(1, 0, 0), Count = 8} },
+                                    { "10", new Animation { Position = new Vector3(1, 2, 0), Texture = new Vector3(1, 2, 0), Count = 1} }
+                                },
+                        };
+        
         public static NodeType Get(NodeTypes type)
         {
             NodeType o = null;
@@ -99,47 +106,68 @@ namespace darkcave
                     o = new NodeType
                     {
                         Color = new Vector3(.6f, .4f, 0.3f),
-                        Texture = new Vector3(1, 0, 0),
+                        Texture = new Vector3(0, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
                         GetDiffuseColor = DiffuseAmbientLight,
-                        GetAmbientColor = (Node node) => { return node.Ambience /10; },
+                        GetAmbientColor = (Node node) => { return node.Ambience * node.Type.Color / 2; },
+                        Textures = { 
+                            {"0000", new Vector3(0, 0, 0)},
+                            {"1000", new Vector3(0, 1, 0)},
+                            {"0100", new Vector3(0, 2, 0)},
+                            {"1100", new Vector3(0, 3, 0)},
+                            {"0010", new Vector3(0, 4, 0)},
+                            {"1010", new Vector3(0, 5, 0)},
+                            {"0110", new Vector3(0, 6, 0)},
+                            {"1110", new Vector3(0, 7, 0)},
+                            {"0001", new Vector3(0, 8, 0)},
+                            {"1001", new Vector3(0, 9, 0)},
+                            {"0101", new Vector3(0, 10, 0)},
+                            {"1101", new Vector3(0, 11, 0)},
+                            {"0011", new Vector3(0, 12, 0)},
+                            {"1011", new Vector3(0, 13, 0)},
+                            {"0111", new Vector3(0, 14, 0)},
+                            {"1111", new Vector3(0, 15, 0)},
+                        }
                     };
                     break;
                 case NodeTypes.Soil:
-                    o = new AnimatedNode
+                    o = new NodeType
                     {
-                        Animation = soilAnim,
-                        Color = new Vector3(.2f, 0.5f, 0.0f),
+                        Color = new Vector3(.6f, .4f, 0.3f),
+                        Texture = new Vector3(0, 0, 0),
                         ResolveCollision = HardCollision,
-                        CanCollide = false,
-                        Opacity = 0.5f,
-                        GetDiffuseColor = DiffuseAmbientLight
-                    };
+                        Opacity = 1.0f,
+                        GetDiffuseColor = DiffuseAmbientLight,
+                        GetAmbientColor = (Node node) => { return node.Ambience * node.Type.Color / 2; },
+                    }.AddDecals(DecalFactory.Get(DecalType.Grass));
                     break;
                 case NodeTypes.Air:
                     o = new NodeType
                     {
                         Color = Vector3.One,
-                        Texture = new Vector3(0, 0, 0),
+                        Texture = new Vector3(14, 0, 0),
                         CanCollide = false,
                         CanRender = false,
                         GetDiffuseColor = DiffuseLight,
                         GetAmbientColor = (Node node) => { return node.Ambience; },
                     };
                     break;
-
                 case NodeTypes.Water:
                     o = new AnimatedNode
                     {
-                        Animation = waterAnim,
+                        Animation = new PassiveAnimationSet
+                        {
+                            Frames = waterAnims.Frames,
+                            ActiveAnimation = "0"
+                        },
                         CanCollide = false,
                         CanRender = true,
                         Color = new Vector3(0.5f, 0.5f, 1),
                         Opacity = 0.1f,
                         ResolveCollision = Slowdown,
                         GetDiffuseColor = DiffuseLight,
-                        GetAmbientColor = (Node node) => { return node.Ambience; },
+                        GetAmbientColor = (Node node) => { return node.Ambience * node.Type.Color; },
                     };
                     break;
                 default:
@@ -206,6 +234,10 @@ namespace darkcave
         public Vector3 Size = Vector3.One;
         public BoundingBox CollisionBox;
 
+        public delegate void NodeEventHandler(Node node);
+
+        public event NodeEventHandler TypeChanged;
+
         public Node()
         {
             Instance = new InstanceData();
@@ -219,6 +251,8 @@ namespace darkcave
             Type = newType;
 
             Type.Init(this);
+            if (TypeChanged != null)
+                TypeChanged(this);
         }
 
         public void SetPosition(Vector3 pos)
@@ -234,7 +268,7 @@ namespace darkcave
         public void GetInstanceData(Instancer instancer)
         {
             Instance.Color = Type.Color;
-            Instance.Light = Ambience + Diffuse;
+            Instance.Light = Diffuse;
             Instance.Texture = Type.Texture;
             instancer.AddInstance(Instance);
             foreach (IDecal decal in Type.Decals)

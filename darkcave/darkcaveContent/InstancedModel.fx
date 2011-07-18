@@ -66,7 +66,7 @@ VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
 	VertexShaderOutput o = VertexShaderCommon(input, transpose(instanceTransform));
 
 	o.Color.xyz  = color.xyz * light.xyz;
-	o.TextureCoordinate = (text + o.TextureCoordinate)* 0.1f;
+	o.TextureCoordinate = (text + o.TextureCoordinate)* 0.0625f;
 	return o; 
 }
 

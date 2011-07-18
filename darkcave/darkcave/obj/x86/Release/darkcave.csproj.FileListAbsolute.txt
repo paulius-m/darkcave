@@ -9,3 +9,4 @@ d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Releas
 d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\Microsoft.Xna.Framework.RuntimeProfile.txt
 d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\darkcave.exe
 d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\obj\x86\Release\darkcave.pdb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\char1.xnb

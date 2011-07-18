@@ -48,16 +48,22 @@ namespace darkcave
 
         Model model;
         Texture2D atlas;
-        public Instancer(int bufferSize)
+        String textureName;
+
+        protected GraphicsDevice Device;
+
+        public Instancer(int bufferSize, string textureName = "atlas")
         {
             instances = new InstanceData[bufferSize];
+            this.textureName = textureName;
+            Device = Game1.Instance.GraphicsDevice;
         }
 
         public void Load()
         {
             model = Game1.Instance.Content.Load<Model>("plane2");
             Effect ef = Game1.Instance.Content.Load<Effect>("InstancedModel");
-            atlas = Game1.Instance.Content.Load<Texture2D>("atlas");
+            atlas = Game1.Instance.Content.Load<Texture2D>(textureName);
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
@@ -126,7 +132,7 @@ namespace darkcave
                     {
                         pass.Apply();
 
-                        Game1.Instance.GraphicsDevice.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, instanceCount);
+                        Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, instanceCount);
                     }
                 }
             }

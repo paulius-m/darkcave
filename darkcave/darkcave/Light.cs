@@ -6,10 +6,18 @@ using Microsoft.Xna.Framework;
 
 namespace darkcave
 {
+    [Flags]
+    public enum LightType
+    {
+        None = 0,
+        Ambient = 1,
+        Direct = 2,
+    }
 
     public interface ILight
     {
         void Update(Node[,] ForeGround, int X, int Y, BoundingBox area);
+        void Clear();
     }
     
     
@@ -17,19 +25,30 @@ namespace darkcave
     {
         public Vector3 Position;
         private List<Node> DirectlyLight = new List<Node>();
+        private float[] Cos;
+        private float[] Sin;
+
+        public PointLight()
+        {
+            Cos = new float[360];
+            Sin = new float[360];
+
+            for (int a = 0; a < 360; a++)
+            {
+                Cos[a] = (float)Math.Cos(MathHelper.ToRadians(a));
+                Sin[a] = (float)Math.Sin(MathHelper.ToRadians(a));
+            }
+        }
+
 
         public void Update(Node[,] ForeGround, int X, int Y, BoundingBox area)
         {
-            for (int i = 0; i < DirectlyLight.Count; i++)
-                DirectlyLight[i].LType = LightType.Ambient;
-
-            DirectlyLight.Clear();
 
             for (int a = 0; a < 360; a++)
             {
                 //TODO: move to table
-                float c = (float)Math.Cos(MathHelper.ToRadians(a));
-                float s = (float)Math.Sin(MathHelper.ToRadians(a));
+                float c = Cos[a];
+                float s = Sin[a];
                 float intensity = 1.0f;
                 Vector2 ray = new Vector2(c, s);
 
@@ -44,7 +63,7 @@ namespace darkcave
                         if (node.Type.Opacity != 0)
                         {
                             node.Diffuse = new Vector3(intensity);
-                            node.LType = LightType.Direct;
+                            node.LType |= LightType.Direct;
                             DirectlyLight.Add(node);
 
                             intensity -= node.Type.Opacity;
@@ -52,6 +71,15 @@ namespace darkcave
                     }
                 }
             }
+        }
+
+
+        public void Clear()
+        {
+            for (int i = 0; i < DirectlyLight.Count; i++)
+                DirectlyLight[i].LType = LightType.None;
+
+            DirectlyLight.Clear();
         }
     }
 
@@ -63,10 +91,7 @@ namespace darkcave
 
         public void Update(Node[,] ForeGround, int X, int Y, BoundingBox area)
         {
-            for (int i = 0; i < DirectlyLight.Count; i++)
-                DirectlyLight[i].LType = LightType.Ambient;
 
-            DirectlyLight.Clear();
 
 
             for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
@@ -80,13 +105,18 @@ namespace darkcave
                         node.Ambience = Color * ambIntencity;
                         ambIntencity -= node.Type.Opacity;
                         DirectlyLight.Add(node);
-                        node.LType = LightType.Direct;
+                        node.LType |= LightType.Ambient;
                     }
                 }
             }
+        }
 
+        public void Clear()
+        {
+            for (int i = 0; i < DirectlyLight.Count; i++)
+                 DirectlyLight[i].LType = LightType.None;
 
-
+            DirectlyLight.Clear();
         }
     }
 }

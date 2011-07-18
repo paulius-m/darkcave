@@ -18,19 +18,37 @@ namespace darkcave
 
         public bool InJump;
 
-        public Animation Frames;
+        public AnimationSet Frames;
         public float RotationX;
+
+        private bool inAction;
 
 
         public Entity()
         {
             Diffuse = Vector3.One;
             Size.X *= 0.9f;
-            Frames = new Animation
+            Frames = new AnimationSet
             {
                 Frames ={
-                    { "run", new AnimationFrame{ Texture = new Vector3(0, 3, 0), Position = new Vector3(0, 3, 0), Count = 8 , Delay = 5} },
-                    { "idle", new AnimationFrame{ Texture = new Vector3 (0, 2, 0), Position = new Vector3(0, 2, 0), Count = 1 } }
+                    { "run", new Animation{ 
+                        Texture = new Vector3(0, 1, 0),
+                        Position = new Vector3(0, 1, 0),
+                        Count = 8 , Delay =5}
+                    },
+                    { "attack", new TransitionAnimation{ 
+                        Texture = new Vector3(0, 0, 0),
+                        Position = new Vector3(0, 0, 0),
+                        EventFrame = 3,
+                        Event = Attack,
+                        End = EndAttack,
+                        Count = 6 , Delay = 6}
+                    },
+                    { "idle", new Animation{
+                        Texture = new Vector3 (0, 0, 0),
+                        Position = new Vector3(0, 0, 0),
+                        Count = 1 }
+                    }
                 }
             };
         }
@@ -56,8 +74,9 @@ namespace darkcave
             {
                 switch (keys[i])
                 {
-                    case Keys.W:
-                        //Speed.Y += MaxSpeed;
+                    case Keys.O:
+                        Frames.SetActive("attack");
+                        inAction = true;
                         break;
                     case Keys.S:
                         //Speed.Y -= MaxSpeed;
@@ -76,15 +95,28 @@ namespace darkcave
                         break;
                 }
             }
+            if (inAction)
+                goto end;
+
             if (Speed.X != 0)
                 Frames.SetActive("run");
             else
                 Frames.SetActive("idle");
-
-            //Frames.Active.Update();
-
+            end:
             Speed.Y -= Gravity;
         }
+
+
+        void Attack()
+        { 
+        
+        }
+
+        void EndAttack()
+        {
+            inAction = false;
+        }
+
 
         void Instanced.GetInstanceData( Instancer instancer)
         {
