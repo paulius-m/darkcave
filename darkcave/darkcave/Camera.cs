@@ -12,7 +12,7 @@ namespace darkcave
         public float AspectRatio;
         public Matrix Projection;
         public Matrix View;
-
+        public Vector2 ViewSize;
         private Viewport view;
 
         private Vector3 position;
@@ -39,12 +39,12 @@ namespace darkcave
 
         public Camera()
         {
-            int zoom = 32;
+            int zoom = 8;
             GraphicsDeviceManager graphics = Game1.Instance.graphics;
             view = Game1.Instance.GraphicsDevice.Viewport;
             AspectRatio = graphics.GraphicsDevice.Viewport.Width * 1.0f / graphics.GraphicsDevice.Viewport.Height;
-
-            Projection = Matrix.CreateOrthographic(graphics.GraphicsDevice.Viewport.Width / zoom, graphics.GraphicsDevice.Viewport.Height / zoom, 1.0f, 1000.0f);
+            ViewSize = new Vector2(graphics.GraphicsDevice.Viewport.Width / zoom, graphics.GraphicsDevice.Viewport.Height / zoom);
+            Projection = Matrix.CreateOrthographic(ViewSize.X, ViewSize.Y, 1.0f, 1000.0f);
 
             position = new Vector3(50, 50,40);
             target = new Vector3(30, 30, 0);

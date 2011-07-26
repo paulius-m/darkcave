@@ -122,8 +122,6 @@ namespace darkcave
             base.Update(gameTime);
         }
 
-
-
         Vector3 getMapPoint(Ray mouseRay)
         {
             float t = -cam.Position.Z / mouseRay.Position.Z;

@@ -79,11 +79,12 @@ namespace darkcave
 
         public override void SetTexture(string name)
         {
-            if (name[3] == '1')
+            if (Animation.Frames.ContainsKey(name)) Animation.SetActive(name);
+            else if (name[3] == '1')
                 Animation.SetActive("1");
             else if (name[1] == '1')
                 Animation.SetActive("0");
-            else Animation.SetActive("10");
+            else Animation.SetActive("0000");
         }
     }
 
@@ -94,7 +95,8 @@ namespace darkcave
                             Frames = { 
                                     { "1", new Animation { Position = new Vector3(1, 1, 0), Texture = new Vector3(1, 1, 0), Count = 8, Delay = 10} },
                                     { "0", new Animation { Position = new Vector3(1, 3, 0), Texture = new Vector3(1, 3, 0), Count = 8} },
-                                    { "10", new Animation { Position = new Vector3(1, 2, 0), Texture = new Vector3(1, 2, 0), Count = 1} }
+                                    { "0000", new Animation { Position = new Vector3(1, 2, 0), Texture = new Vector3(1, 2, 0), Count = 1} },
+                                    { "1111", new Animation {Position = new Vector3 (1, 4, 0), Texture = new Vector3(1, 4, 0), Count = 1 } }
                                 },
                         };
         

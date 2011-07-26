@@ -21,7 +21,7 @@ namespace darkcave
     }
     
     
-    class PointLight : ILight
+    public class PointLight : ILight
     {
         public Vector3 Position;
         private List<Node> DirectlyLight = new List<Node>();

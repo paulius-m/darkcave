@@ -3,3 +3,4 @@ Content\InstancedModel.xnb
 Content\E.xnb
 Content\plane2.xnb
 Content\atlas.xnb
+Content\char1.xnb

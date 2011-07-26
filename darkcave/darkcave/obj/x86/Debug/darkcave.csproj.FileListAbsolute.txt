@@ -9,3 +9,4 @@ d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\
 d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\E.xnb
 d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\plane2.xnb
 d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\atlas.xnb
+d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\char1.xnb

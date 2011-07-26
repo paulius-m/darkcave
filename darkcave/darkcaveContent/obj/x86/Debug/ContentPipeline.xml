@@ -28,7 +28,7 @@
       <Processor>EffectProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\InstancedModel.xnb</Output>
-      <Time>2011-03-22T21:01:00.8688977+02:00</Time>
+      <Time>2011-07-03T16:32:28.0567209+03:00</Time>
     </Item>
     <Item>
       <Source>E.png</Source>
@@ -66,7 +66,16 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\atlas.xnb</Output>
-      <Time>2011-06-19T15:49:11.1541345+03:00</Time>
+      <Time>2011-07-26T21:31:45.4918808+03:00</Time>
+    </Item>
+    <Item>
+      <Source>char1.png</Source>
+      <Name>char1</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Debug\Content\char1.xnb</Output>
+      <Time>2011-07-03T16:47:47.2334927+03:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
