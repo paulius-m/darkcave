@@ -8,7 +8,8 @@ namespace darkcave
 {
     public enum NodeTypes
     {
-        Air = 0,
+        Custom = 0,
+        Air,
         Soil,
         Earth,
         Water,
@@ -31,6 +32,7 @@ namespace darkcave
         public bool CanRender = true;
 
         public float Opacity;
+        public float ReflectionAngle;
 
         public List<IDecal> Decals = new List<IDecal>();
 
@@ -52,7 +54,6 @@ namespace darkcave
                 dec.Init(node);
         }
 
-
         public Dictionary<string, Vector3> Textures = new Dictionary<string,Vector3>();
         public virtual void SetTexture(string name)
         {
@@ -66,6 +67,7 @@ namespace darkcave
         {
             get
             {
+                //ReflectionAngle = Animation.Active.Texture.X / 2;
                 return Animation.Active.Texture;
             }
             set
@@ -91,7 +93,7 @@ namespace darkcave
                         {
                             Frames = { 
                                     { "1", new Animation { Position = new Vector3(1, 1, 0), Texture = new Vector3(1, 1, 0), Count = 8, Delay = 10} },
-                                    { "0", new Animation { Position = new Vector3(1, 0, 0), Texture = new Vector3(1, 0, 0), Count = 8} },
+                                    { "0", new Animation { Position = new Vector3(1, 3, 0), Texture = new Vector3(1, 3, 0), Count = 8} },
                                     { "10", new Animation { Position = new Vector3(1, 2, 0), Texture = new Vector3(1, 2, 0), Count = 1} }
                                 },
                         };
@@ -163,11 +165,23 @@ namespace darkcave
                         },
                         CanCollide = false,
                         CanRender = true,
+                        //ReflectionAngle = 0.1f,
                         Color = new Vector3(0.5f, 0.5f, 1),
                         Opacity = 0.1f,
                         ResolveCollision = Slowdown,
                         GetDiffuseColor = DiffuseLight,
                         GetAmbientColor = (Node node) => { return node.Ambience * node.Type.Color; },
+                    };
+                    break;
+                case NodeTypes.Fire:
+                    o = new NodeType
+                    {
+                        Color = new Vector3(1.0f, .2f, 0),
+                        Texture = new Vector3(15, 0, 0),
+                        ResolveCollision = HardCollision,
+                        Opacity = 1.0f,
+                        GetDiffuseColor = (Node node) => { return node.Type.Color; },
+                        GetAmbientColor = (Node node) => { return node.Type.Color; }
                     };
                     break;
                 default:
@@ -247,6 +261,7 @@ namespace darkcave
         {
             if (Type!= null && Type.Type == newType.Type)
                 return;
+
             newType.OldNodeType = Type;
             Type = newType;
 
@@ -268,9 +283,10 @@ namespace darkcave
         public void GetInstanceData(Instancer instancer)
         {
             Instance.Color = Type.Color;
-            Instance.Light = Diffuse;
+            Instance.Light = Diffuse + Ambience;
             Instance.Texture = Type.Texture;
             instancer.AddInstance(Instance);
+
             foreach (IDecal decal in Type.Decals)
             {
                 decal.GetInstanceData(instancer);

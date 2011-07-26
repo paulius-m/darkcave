@@ -7,6 +7,11 @@ using Microsoft.Xna.Framework.Input;
 
 namespace darkcave
 {
+    public class LocalEnvironment
+    {
+        public Node Node;
+    }
+
     public class Entity : Node, Instanced
     {
 
@@ -23,6 +28,7 @@ namespace darkcave
 
         private bool inAction;
 
+        public LocalEnvironment Environment;
 
         public Entity()
         {
@@ -30,7 +36,7 @@ namespace darkcave
             Size.X *= 0.9f;
             Frames = new AnimationSet
             {
-                Frames ={
+                Frames = {
                     { "run", new Animation{ 
                         Texture = new Vector3(0, 1, 0),
                         Position = new Vector3(0, 1, 0),
@@ -106,7 +112,6 @@ namespace darkcave
             Speed.Y -= Gravity;
         }
 
-
         void Attack()
         { 
         
@@ -120,8 +125,12 @@ namespace darkcave
 
         void Instanced.GetInstanceData( Instancer instancer)
         {
-            Instance.Color = Type.Color;
-            Instance.Light = Diffuse + Ambience;
+            Instance.Color = Vector3.One;
+            if (Environment.Node != null)
+                Instance.Light = Environment.Node.Diffuse + Environment.Node.Ambience;
+            else
+                Instance.Light = Diffuse + Ambience;
+
             Instance.Texture = Frames.Active.Texture;
             instancer.AddInstance(Instance);
         }

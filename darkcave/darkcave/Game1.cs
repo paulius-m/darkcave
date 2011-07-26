@@ -17,7 +17,6 @@ namespace darkcave
     public class Game1 : Microsoft.Xna.Framework.Game
     {
         public GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
 
         Map map;
         Instancer render;
@@ -86,16 +85,35 @@ namespace darkcave
             {
                 if (mouse.LeftButton == ButtonState.Pressed)
                 {
-                    node.SetType(NodeFactory.Get(newNodeType));
+                    var type = NodeFactory.Get(newNodeType);
+                    /*
+                    type.Color = Vector3.One;
+                    type.GetAmbientColor = (Node n) => { return n.Ambience; };
+                    type.GetDiffuseColor = (Node n) => { return n.Diffuse; };
+                    type.CanCollide = true;
+                    type.ResolveCollision = NodeFactory.HardCollision;
+                    type.Opacity = 1;
+                    type.Texture = new Vector3(15, 15, 0);*/
+
+                    node.SetType(type);
                 }
                 else if (mouse.RightButton == ButtonState.Pressed)
                 {
                     newNodeType = node.Type.Type;
                 }
+
+                if (mouse.MiddleButton == ButtonState.Pressed)
+                {
+                    map.SpawnLight(player.Postion);
+                }
             }
+
             render.Reset();
             playerRender.Reset();
             map.Update(cam);
+
+
+            player.Environment = map.Describe(player.Postion);
             player.Move();
             map.ResolveCollisions(player);
 
