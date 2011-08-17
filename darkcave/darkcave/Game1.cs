@@ -65,8 +65,8 @@ namespace darkcave
         {
         }
 
-        NodeTypes newNodeType = NodeTypes.Water;
-
+        NodeTypes newNodeType = NodeTypes.Cloud;
+        MouseState oldstate;
         protected override void Update(GameTime gameTime)
         {
             MouseState mouse = Mouse.GetState();
@@ -83,31 +83,23 @@ namespace darkcave
 
             if (node != null)
             {
-                if (mouse.LeftButton == ButtonState.Pressed)
+                if (mouse.LeftButton == ButtonState.Pressed && mouse.LeftButton == oldstate.LeftButton)
                 {
                     var type = NodeFactory.Get(newNodeType);
-                    /*
-                    type.Color = Vector3.One;
-                    type.GetAmbientColor = (Node n) => { return n.Ambience; };
-                    type.GetDiffuseColor = (Node n) => { return n.Diffuse; };
-                    type.CanCollide = true;
-                    type.ResolveCollision = NodeFactory.HardCollision;
-                    type.Opacity = 1;
-                    type.Texture = new Vector3(15, 15, 0);*/
-
                     node.SetType(type);
                 }
-                else if (mouse.RightButton == ButtonState.Pressed)
+                else if (mouse.RightButton == ButtonState.Pressed && mouse.RightButton == mouse.RightButton)
                 {
                     newNodeType = node.Type.Type;
                 }
 
-                if (mouse.MiddleButton == ButtonState.Pressed)
+                if (mouse.MiddleButton == ButtonState.Pressed && mouse.MiddleButton != oldstate.MiddleButton)
                 {
                     map.SpawnLight(player.Postion);
                 }
             }
 
+            oldstate = mouse;
             render.Reset();
             playerRender.Reset();
             map.Update(cam);
@@ -116,9 +108,8 @@ namespace darkcave
             player.Environment = map.Describe(player.Postion);
             player.Move();
             map.ResolveCollisions(player);
-
             player.Update();
-
+            
             base.Update(gameTime);
         }
 

@@ -39,7 +39,7 @@ namespace darkcave
 
         public Camera()
         {
-            int zoom = 8;
+            int zoom = 32;
             GraphicsDeviceManager graphics = Game1.Instance.graphics;
             view = Game1.Instance.GraphicsDevice.Viewport;
             AspectRatio = graphics.GraphicsDevice.Viewport.Width * 1.0f / graphics.GraphicsDevice.Viewport.Height;

@@ -16,15 +16,30 @@ namespace darkcave
 
     public interface ILight
     {
-        void Update(Node[,] ForeGround, int[] Relief, int X, int Y, BoundingBox area);
+        void Update(BoundingBox area);
         void Clear();
+        void Update(Node node);
     }
     
     
     public class PointLight : ILight
     {
-        public Vector3 Position;
+        private Vector3 position;
+        public Vector3 Position
+        {
+            get { return position; }
+            set { 
+                if (value != position)
+
+                position = value;}
+        }
+
+        public Node[,] ForeGround;
+        public int X;
+        public int Y;
+
         private List<Node> DirectlyLight = new List<Node>();
+        private int[] distances = new int[360];
         private float[] Cos;
         private float[] Sin;
 
@@ -37,11 +52,12 @@ namespace darkcave
             {
                 Cos[a] = (float)Math.Cos(MathHelper.ToRadians(a));
                 Sin[a] = (float)Math.Sin(MathHelper.ToRadians(a));
+                distances[a] = int.MaxValue;
             }
         }
 
 
-        public void Update(Node[,] ForeGround, int[] Relief, int X, int Y, BoundingBox area)
+        public void Update(BoundingBox area)
         {
 
             for (int a = 0; a < 360; a++)
@@ -50,20 +66,31 @@ namespace darkcave
                 float c = Cos[a];
                 float s = Sin[a];
                 float intensity = 1.0f;
-                Vector2 ray = new Vector2(c, s);
+                Vector3 ray = new Vector3(c, s, 0);
 
-                for (int r = 1; r < 100 && intensity > 0; r++)
+                int r = distances[a] == int.MaxValue ? 1 : distances[a];
+
+                for (; r < 100 && intensity > 0; r++)
                 {
                     int x = (int)((r * ray.X) + Position.X);
                     int y = (int)((r * ray.Y) + Position.Y);
 
+                    Node oldNode;
+
                     if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                     {
                         var node = ForeGround[x, y];
+
+
                         if (node.Type.Opacity != 0)
                         {
+                            if (r < distances[a])
+                                distances[a] = r;
+
                             node.Diffuse = new Vector3(intensity);
+                            //node.LightDirection += ray;
                             node.LType |= LightType.Direct;
+
                             /*
                             if (node.Type.ReflectionAngle != 0)
                             {
@@ -73,6 +100,7 @@ namespace darkcave
 
                             intensity -= node.Type.Opacity;
                         }
+                        
                     }
                 }
             }
@@ -93,24 +121,53 @@ namespace darkcave
 
             DirectlyLight.Clear();
         }
+
+        private void ClearDistances()
+        {
+            for (int a = 0; a < 360; a++)
+            {
+                distances[a] = int.MaxValue;
+            }
+        }
+
+
+        public void Update(Node node)
+        {
+            if (node.Type.Opacity == 0)
+            {
+                return;
+            }
+            var direction = node.Postion - Position;
+            int distance = (int)direction.Length();
+
+
+            for (int a = 0; a < 360; a++)
+            {
+                if (distance < distances[a])
+                    distances[a] = distance;
+            }
+        }
     }
 
     public class SkyLight : ILight
     {
         public Vector3 Color;
-        
+        public Node[,] ForeGround;
+        public int X;
+        public int Y;
+        public int[] Relief;
+
+
+
+
         public List<Node> DirectlyLight = new List<Node>();
 
-        public void Update(Node[,] ForeGround, int[] Relief, int X, int Y, BoundingBox area)
+        public void Update(BoundingBox area)
         {
-
-
-
             for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
             {
                 float ambIntencity = 1;
-                if (area.Max.Y - 1 < Relief[i1])
-                    continue;
+
                 for (int i2 = Relief[i1]; i2 >= area.Min.Y; i2--)
                 {
                     var node = ForeGround[i1, i2];
@@ -131,6 +188,11 @@ namespace darkcave
                  DirectlyLight[i].LType = LightType.None;
 
             DirectlyLight.Clear();
+        }
+
+
+        public void Update(Node node)
+        {
         }
     }
 }

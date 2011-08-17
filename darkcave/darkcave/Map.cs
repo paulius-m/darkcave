@@ -24,7 +24,9 @@ namespace darkcave
             Y = (int)Size.Y;
         }
 
-        List<IMapComponent> components = new List<IMapComponent> { new LightingComponent(), new WaterSimulator(), new TextureModifier() };
+        LightingComponent lighting = new LightingComponent();
+
+        List<IMapComponent> components;
 
         public void Init()
         {
@@ -59,7 +61,7 @@ namespace darkcave
                 for (int i2 = 0; i2< i3 - 3; i2++)
                 {
                     double y = i2 * 1.0 / i3;
-                    noise = 1 - Noise.NextOctave2D(4, x, y) / 4;
+                    noise = 1 - Noise.NextOctave2DAbs(4, x, y) / 4;
                     node = new Node
                     {
                         Value = noise,
@@ -87,7 +89,7 @@ namespace darkcave
                 for (int i2 = i3 + 1; i2 < Y; i2++)
                 {
                     double y = i2 / Size.Y;
-                    noise = Noise.NextOctave2D(2, -x, -y);
+                    noise = Noise.NextOctave2DAbs(2, -x, -y);
                     node = new Node
                     {
                         Value = noise,
@@ -99,7 +101,7 @@ namespace darkcave
                     ForeGround[i1, i2] = node;
                 }
             }
-
+            components = new List<IMapComponent> {lighting, new Clouds(), new WaterSimulator(), new TextureModifier() };
             foreach (var component in components)
                 component.Init(ForeGround, X, Y);
         }
@@ -208,12 +210,12 @@ namespace darkcave
 
         public LocalEnvironment Describe (Vector3 position)
         {
-            return new LocalEnvironment { Node = this.GetNode((int) Math.Round( position.X), (int) Math.Round(position.Y))};
+            return new LocalEnvironment { Node = this.GetNode((int) Math.Round(position.X), (int) Math.Round(position.Y))};
         }
 
         public void SpawnLight(Vector3 position)
         {
-            //lights.Add(new PointLight { Position = position });
+            lighting.lights.Add(new PointLight { Position = position, ForeGround = ForeGround, X = X, Y = Y });
         }
 
     }

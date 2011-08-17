@@ -127,7 +127,10 @@ namespace darkcave
         {
             Instance.Color = Vector3.One;
             if (Environment.Node != null)
+            {
                 Instance.Light = Environment.Node.Diffuse + Environment.Node.Ambience;
+                Environment.Node.Ambience = Vector3.One;
+            }
             else
                 Instance.Light = Diffuse + Ambience;
 

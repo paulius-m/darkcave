@@ -150,13 +150,24 @@ namespace darkcave
             return 70.0 * (n0 + n1 + n2);
         }
 
-        public static double NextOctave2D(int octaves, double x, double y)
+        public static double NextOctave2DAbs(int octaves, double x, double y)
         {
             double value = 0.0;
             int i;
             for (i = 0; i < octaves; i++)
             {
                 value += Math.Abs( Next2D( x * Math.Pow(2, i), y * Math.Pow(2, i)));
+            }
+            return value;
+        }
+
+        public static double NextOctave2D(int octaves, double x, double y)
+        {
+            double value = 0.0;
+            int i;
+            for (i = 0; i < octaves; i++)
+            {
+                value += Next2D(x * Math.Pow(2, i), y * Math.Pow(2, i));
             }
             return value;
         }

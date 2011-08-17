@@ -25,15 +25,22 @@ namespace darkcave
         private int X;
         private int Y;
 
+        protected Vector3[][,] LightField;
+        protected Vector3[,] LightDiffusion;
+
         public void Init(Node[,] foreGround, int x, int y)
         {
             ForeGround = foreGround;
             X = x;
             Y = y;
-
+            LightField = new Vector3[2][,];
+            LightField[0] = new Vector3[X, Y];
+            LightField[1] = new Vector3[X, Y];
+            LightDiffusion = new Vector3[X, Y];
             Relief = new int[x];
-            sun = new PointLight { Position = new Vector3(50, 90, 0) };
-            sky = new SkyLight { Color = new Vector3(.4f, .5f, 1f) };
+
+            sun = new PointLight { Position = new Vector3(50, 90, 0), ForeGround = foreGround, X = x, Y = y};
+            sky = new SkyLight { Color = new Vector3(.4f, .5f, 1f), ForeGround = foreGround, X = x, Y = y, Relief = Relief};
 
             for (int i1 = 0; i1 < X; i1++)
             {
@@ -60,13 +67,26 @@ namespace darkcave
                 light.Clear();
             }
 
-            sun.Update(ForeGround, Relief, X, Y, area);
-            sky.Update(ForeGround, Relief, X, Y, area);
+            sun.Update(area);
+            sky.Update(area);
 
             foreach (var light in lights)
             {
-                light.Update(ForeGround, Relief, X, Y, area);
+                light.Update(area);
             }
+
+            
+            for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
+            {
+                for (int i2 = (int) area.Min.Y; i2 < area.Max.Y; i2++)
+                {
+                    var node = ForeGround[i1, i2];
+                    LightField[0][i1, i2] = node.GetLightColor();
+                    LightField[1][i1, i2] = node.GetAmbientColor();
+                    node.LightDirection.Normalize();
+                }
+            }
+
         }
 
         public void Update(Node node)
@@ -88,10 +108,9 @@ namespace darkcave
                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                 {
                     Node hit = ForeGround[x, y];
-                    //if (hit.Type.Type != node.Type.Type)
                     {
-                        sum += hit.GetLightColor();
-                        sum2 += hit.GetAmbientColor();
+                        sum += LightField[0][x, y];
+                        sum2 += LightField[1][x, y];
                     }
                     count++;
                 }
@@ -103,9 +122,9 @@ namespace darkcave
                 }
             }
             if ((node.LType & LightType.Direct) != LightType.Direct)
-                node.Diffuse = (sum / (float)(count == 0 ? 1 : count));
+               LightField[0][(int)node.Postion.X , (int)node.Postion.Y ] = node.Diffuse = (sum / (float)(count == 0 ? 1 : count));
             if ((node.LType & LightType.Ambient) != LightType.Ambient)
-                node.Ambience = (sum2 / (float)(count == 0 ? 1 : count));
+               LightField[1][(int)node.Postion.X , (int)node.Postion.Y ] =  node.Ambience = (sum2 / (float)(count == 0 ? 1 : count));
         }
 
         public void UpdateRelief(Node node)
@@ -124,6 +143,13 @@ namespace darkcave
                 {
                 }
             }
+            sun.Update(node);
+            foreach (var light in lights)
+            {
+                light.Update(node);
+            }
+
+
         }
     }
 
@@ -232,6 +258,33 @@ namespace darkcave
                         UpdateNodeTexure(neighbour);
                 }
             }
+
+            if (node.Type.Type == NodeTypes.Earth)
+            {
+                int i = 1; bool cont = true;
+                do
+                {
+                    if (MyMath.IsBetween(nodeX, 0, X) && MyMath.IsBetween(nodeY - i, 0, Y))
+                    {
+                        var n2 = ForeGround[nodeX, nodeY - i];
+                        if (n2.Type.CanRender == false )
+                        {
+                            n2.Type.CanRender = true;
+                            i++;
+                        }
+                        else if (n2.Type.OldNodeType != null && n2.Type.OldNodeType.CanRender == false)
+                        {
+                            n2.Type.OldNodeType.CanRender = true;
+                            i++;
+                        }
+                        else
+                            cont = false;
+                    }
+                    else cont = false;
+                } while (cont);
+            }
+
+
         }
 
         readonly Vector2[] Rays2 = new Vector2[] { new Vector2(-1, 0), new Vector2(0, -1), new Vector2(1, 0), new Vector2(0, 1) };
@@ -258,4 +311,47 @@ namespace darkcave
             node.Type.SetTexture(texture);
         }
     }
+
+    public class Clouds : IMapComponent
+    {
+        protected Node[,] ForeGround;
+        private int X;
+        private int Y;
+        
+        public void Init(Node[,] foreGround, int X, int Y)
+        {
+            ForeGround = foreGround;
+            this.X = X;
+            this.Y = Y;
+
+            for (int i1 = 0; i1 < X; i1++)
+            for (int i2 = Y / 2; i2 < Y; i2++)
+            {
+                double x = (double)i1 / X;
+                double y = (double)i2 / Y;
+                int oct = 5;
+                double noise = Math.Sin(Noise.NextOctave2D(oct, x, y) / oct - 0.2)*2;
+                if (noise > 0.0f)
+                {
+                    NodeType cloud = NodeFactory.Get(NodeTypes.Cloud);
+                    cloud.Opacity = (float)noise / 5;
+                    //cloud.Opacity 
+                    ForeGround[i1, i2].SetType(cloud);
+                }
+            }
+
+        }
+
+        public void PreUpdate(BoundingBox area)
+        {
+
+        }
+
+        public void Update(Node node)
+        {
+
+        }
+    }
+
+
 }
