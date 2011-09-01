@@ -23,7 +23,11 @@ namespace darkcave
         Instancer playerRender;
         Camera cam;
         Entity player;
+        Enemy enemy;
 
+        List<Entity> entities;
+
+        public World gameWorld;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -42,12 +46,20 @@ namespace darkcave
         {
             IsMouseVisible = true;
             render = new Instancer(200010);
-            playerRender = new Instancer(1, "char1");
+            playerRender = new Instancer(2, "char1");
             map = new Map (new Vector3(400, 100, 0));
             cam = new Camera();
             player = new Entity();
+            enemy = new Enemy();
+            entities = new List<Entity> { player, enemy };
             player.Postion = new Vector3(70, 100, 0);
-            player.SetType(new  NodeType {Texture = new Vector3(0, 2, 0)});
+            
+            enemy.Postion = new Vector3(72, 100, 0);
+            gameWorld = new World();
+            gameWorld.AddEntity(player);
+            gameWorld.AddEntity(enemy);
+            gameWorld.Map = map;
+            //enemy.SetType(new NodeType { Texture = new Vector3(0, 2, 0) });
 
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
@@ -76,11 +88,6 @@ namespace darkcave
             Node node = map.GetNode((int)point.X, (int) point.Y );
             cam.Target = player.Postion;
 
-            if (gameTime.IsRunningSlowly)
-                player.Diffuse = new Vector3(1, 0, 0);
-            else
-                player.Diffuse = Vector3.One;
-
             if (node != null)
             {
                 if (mouse.LeftButton == ButtonState.Pressed && mouse.LeftButton == oldstate.LeftButton)
@@ -100,16 +107,7 @@ namespace darkcave
             }
 
             oldstate = mouse;
-            render.Reset();
-            playerRender.Reset();
             map.Update(cam);
-
-
-            player.Environment = map.Describe(player.Postion);
-            player.Move();
-            map.ResolveCollisions(player);
-            player.Update();
-            
             base.Update(gameTime);
         }
 
@@ -124,9 +122,11 @@ namespace darkcave
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            
+            render.Reset();
+            playerRender.Reset();
             map.AddToDraw(cam, render);
             playerRender.AddInstance(player);
+            playerRender.AddInstance(enemy);
             render.Draw(cam);
             playerRender.Draw(cam);
         }

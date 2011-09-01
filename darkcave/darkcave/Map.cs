@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace darkcave
 {
-    class Map
+    public class Map
     {
         public Vector3 Size;
         private readonly int X;
@@ -41,10 +41,13 @@ namespace darkcave
             {
                 double x = i1 / Size.X;
                     
-                double noise = Noise.NextOctave1D(1, -x, 0) / 2 + 0.5f;
-                double noise2 = Math.Abs(Noise.NextOctave1D(4, x, 2.5f)) / 10;
+                double noise = Noise.NextOctave1D(1, -x, 0) / 5 + 0.5f;
+                double noise2 = Math.Abs(Noise.NextOctave1D(2, x, 2.5f)) / 10;
+
+
 
                 noise = MathHelper.Clamp( (float) (noise + noise2), 0, 1);
+
                 i3 = (int)(noise * (Y -1));
 
                 var node = new Node
@@ -101,7 +104,7 @@ namespace darkcave
                     ForeGround[i1, i2] = node;
                 }
             }
-            components = new List<IMapComponent> {lighting, new Clouds(), new WaterSimulator(), new TextureModifier() };
+            components = new List<IMapComponent> {lighting, /*new Clouds(),*/ new WaterSimulator(), new TextureModifier() };
             foreach (var component in components)
                 component.Init(ForeGround, X, Y);
         }

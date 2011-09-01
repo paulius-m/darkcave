@@ -75,18 +75,16 @@ namespace darkcave
                 light.Update(area);
             }
 
-            
             for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
             {
                 for (int i2 = (int) area.Min.Y; i2 < area.Max.Y; i2++)
                 {
                     var node = ForeGround[i1, i2];
-                    LightField[0][i1, i2] = node.GetLightColor();
-                    LightField[1][i1, i2] = node.GetAmbientColor();
-                    node.LightDirection.Normalize();
+                    LightField[0][i1, i2] = (node.Incident + node.Emmision );
+                    LightField[1][i1, i2] =  (node.Emmision);
+                    //node.LightDirection.Normalize();
                 }
             }
-
         }
 
         public void Update(Node node)
@@ -97,9 +95,11 @@ namespace darkcave
         private void lightUp(Node node)
         {
             Vector3 sum = new Vector3();
-            Vector3 sum2 = new Vector3();
-            int count = 0, count2 = 0;
-
+            Vector3 eSum = new Vector3();
+            float count = 1;
+            float ecount = 1;
+            sum += LightField[0][(int)(node.Postion.X), (int)(node.Postion.Y)];
+            eSum += LightField[1][(int)(node.Postion.X), (int)(node.Postion.Y)];
             for (int i2 = 0; i2 < Utils.Rays.Length; i2++)
             {
                 int x = (int)(node.Postion.X + Utils.Rays[i2].X);
@@ -108,11 +108,22 @@ namespace darkcave
                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                 {
                     Node hit = ForeGround[x, y];
+
+                    if ((hit.LType & LightType.Direct) == LightType.Direct)
+                    {
+                        sum += LightField[0][x, y] * MathHelper.Clamp(Vector3.Dot(hit.LightDirection, Utils.Rays[i2]), 0, 1);
+                    }
+                    else if (hit.Type.Opacity == 1 && node.Type.Opacity == 1)
+                    {
+                        /*dark*/
+                    }
+                    else
                     {
                         sum += LightField[0][x, y];
-                        sum2 += LightField[1][x, y];
+                        eSum += LightField[1][x, y];
                     }
-                    count++;
+
+                    count += 1;
                 }
                 else
                 {
@@ -121,10 +132,8 @@ namespace darkcave
                     //count++;
                 }
             }
-            if ((node.LType & LightType.Direct) != LightType.Direct)
-               LightField[0][(int)node.Postion.X , (int)node.Postion.Y ] = node.Diffuse = (sum / (float)(count == 0 ? 1 : count));
-            if ((node.LType & LightType.Ambient) != LightType.Ambient)
-               LightField[1][(int)node.Postion.X , (int)node.Postion.Y ] =  node.Ambience = (sum2 / (float)(count == 0 ? 1 : count));
+            node.Incident = (sum / count);
+            node.Emmision = eSum / count;
         }
 
         public void UpdateRelief(Node node)
@@ -148,8 +157,6 @@ namespace darkcave
             {
                 light.Update(node);
             }
-
-
         }
     }
 
@@ -193,7 +200,7 @@ namespace darkcave
             for (int i = 0; i < 5; i++)
             {
                 var downNode = ForeGround[(int)MathHelper.Clamp(node.Postion.X + waterX[r, i], 0, X - 1), (int)MathHelper.Clamp(node.Postion.Y + waterY[i], 0, Y - 1)];
-                if (downNode.Type.Type == NodeTypes.Air)
+                if (downNode.Type.Type != NodeTypes.Water && !downNode.Type.CanCollide)
                 {
                     var temp = node.Type;
 
@@ -317,13 +324,13 @@ namespace darkcave
         protected Node[,] ForeGround;
         private int X;
         private int Y;
-        
+        private Random rand;
         public void Init(Node[,] foreGround, int X, int Y)
         {
             ForeGround = foreGround;
             this.X = X;
             this.Y = Y;
-
+            rand = new Random();
             for (int i1 = 0; i1 < X; i1++)
             for (int i2 = Y / 2; i2 < Y; i2++)
             {
@@ -349,6 +356,29 @@ namespace darkcave
 
         public void Update(Node node)
         {
+            if (node.Type.Type == NodeTypes.Cloud)
+            {
+                if (node.Updated > 0)
+                    node.Updated--;
+                else
+                    UpdateCloud(node);
+            }
+        }
+
+        private void UpdateCloud(Node node)
+        {
+
+            var nextnode = ForeGround[(int)MathHelper.Clamp(node.Postion.X - 1, 0, X - 1), (int)node.Postion.Y];
+            if (nextnode.Type.Type != NodeTypes.Cloud)
+            {
+                var temp = node.Type;
+
+                node.SetType(temp.OldNodeType);
+                nextnode.SetType(temp);
+
+                nextnode.Updated = 20;
+                return;
+            }
 
         }
     }

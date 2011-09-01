@@ -43,7 +43,7 @@ namespace darkcave
         public void GetInstanceData(Instancer instancer)
         {
             Instance.Color = Color;
-            Instance.Light = Node.Diffuse + Node.Ambience;
+            Instance.Light = Node.Incident + Node.Emmision;
             Instance.Texture = Texture;
             instancer.AddInstance(Instance);
         }

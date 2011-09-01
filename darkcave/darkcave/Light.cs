@@ -38,8 +38,8 @@ namespace darkcave
         public int X;
         public int Y;
 
-        private List<Node> DirectlyLight = new List<Node>();
-        private int[] distances = new int[360];
+        public List<Node> DirectlyLight = new List<Node>();
+        private float[] distances = new float[722];
         private float[] Cos;
         private float[] Sin;
 
@@ -59,16 +59,46 @@ namespace darkcave
 
         public void Update(BoundingBox area)
         {
+            /*for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
+            {
+                for (int i2 = (int)area.Min.Y; i2 < area.Max.Y; i2++)
+                {
+                    var node = ForeGround[i1, i2];
 
+                    if (node.Type.Opacity == 1)
+                    {
+                        var radial = ToRadial(node.Postion);
+                        if (radial.Item2 <= distances[radial.Item1])
+                        {
+                            distances[radial.Item1] = radial.Item2;
+                        }
+                    }
+                }
+            }
+
+            for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
+            {
+                for (int i2 = (int)area.Min.Y; i2 < area.Max.Y; i2++)
+                {
+                    var node = ForeGround[i1, i2];
+
+                    var radial = ToRadial(node.Postion);
+                    if (radial.Item2 <= distances[radial.Item1])
+                    {
+                        node.Emmision += new Vector3(.5f);
+                    }
+                }
+            }
+            return;*/
+            
+            Vector3 ray = Vector3.Zero;
             for (int a = 0; a < 360; a++)
             {
-                //TODO: move to table
-                float c = Cos[a];
-                float s = Sin[a];
-                float intensity = 1.0f;
-                Vector3 ray = new Vector3(c, s, 0);
+                ray.X = Cos[a];
+                ray.Y = Sin[a];
+                float intensity = 1f;
 
-                int r = distances[a] == int.MaxValue ? 1 : distances[a];
+                float r = distances[a] == int.MaxValue ? 1 : distances[a];
 
                 for (; r < 100 && intensity > 0; r++)
                 {
@@ -81,16 +111,12 @@ namespace darkcave
                     {
                         var node = ForeGround[x, y];
 
-
                         if (node.Type.Opacity != 0)
                         {
-                            if (r < distances[a])
-                                distances[a] = r;
-
-                            node.Diffuse = new Vector3(intensity);
-                            //node.LightDirection += ray;
-                            node.LType |= LightType.Direct;
-
+                            node.LType |= LightType.Direct; 
+                            node.LightDirection = Vector3.Normalize(node.Postion - position);
+                            if (node.Emmision.X < 2 && node.Emmision.Y < 2 && node.Emmision.Z < 2)
+                                node.Emmision += new Vector3(intensity);
                             /*
                             if (node.Type.ReflectionAngle != 0)
                             {
@@ -106,6 +132,16 @@ namespace darkcave
             }
         }
 
+        private Tuple<int, float> ToRadial(Vector3 position)
+        {
+            Vector3 diff = position - Position;
+            float dist = diff.Length();
+            float a = MathHelper.ToDegrees((float)(Math.Atan2(diff.X, diff.Y) + Math.PI));
+            //System.IO.File.AppendAllText("D:\\1.txt", ((int)a).ToString() + " " + ((int)(a*2)).ToString() + "\n");
+            int angle = (int)(a);
+            return Tuple.Create(angle, dist);
+        }
+
         private Vector2 Rotate(Vector2 ray, float a)
         {
             float c2 = (float)Math.Cos(a);
@@ -117,7 +153,10 @@ namespace darkcave
         public void Clear()
         {
             for (int i = 0; i < DirectlyLight.Count; i++)
+            {
                 DirectlyLight[i].LType = LightType.None;
+                DirectlyLight[i].Emmision = Vector3.Zero;
+            }
 
             DirectlyLight.Clear();
         }
@@ -137,15 +176,10 @@ namespace darkcave
             {
                 return;
             }
-            var direction = node.Postion - Position;
-            int distance = (int)direction.Length();
 
-
-            for (int a = 0; a < 360; a++)
-            {
-                if (distance < distances[a])
-                    distances[a] = distance;
-            }
+            var radial = ToRadial(node.Postion);
+            if (distances[radial.Item1] < radial.Item2)
+                distances[radial.Item1] = radial.Item2;
         }
     }
 
@@ -156,9 +190,6 @@ namespace darkcave
         public int X;
         public int Y;
         public int[] Relief;
-
-
-
 
         public List<Node> DirectlyLight = new List<Node>();
 
@@ -173,10 +204,12 @@ namespace darkcave
                     var node = ForeGround[i1, i2];
                     if (node.Type.Opacity != 0 && ambIntencity > 0)
                     {
-                        node.Ambience = Color * ambIntencity;
-                        ambIntencity -= node.Type.Opacity;
                         DirectlyLight.Add(node);
-                        node.LType |= LightType.Ambient;
+                        node.LType |= LightType.Direct;
+                        node.LightDirection = new Vector3 (0, -1, 0);
+                        if (node.Emmision.X < 2 && node.Emmision.Y < 2 && node.Emmision.Z < 2)
+                            node.Emmision += Color * (ambIntencity);
+                        ambIntencity -= node.Type.Opacity;
                     }
                 }
             }
@@ -185,8 +218,10 @@ namespace darkcave
         public void Clear()
         {
             for (int i = 0; i < DirectlyLight.Count; i++)
-                 DirectlyLight[i].LType = LightType.None;
-
+            {
+                DirectlyLight[i].LType = LightType.None;
+                DirectlyLight[i].Emmision = Vector3.Zero;
+            }
             DirectlyLight.Clear();
         }
 

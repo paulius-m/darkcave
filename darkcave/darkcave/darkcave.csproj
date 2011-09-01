@@ -121,6 +121,7 @@
     <Compile Include="Renderer.cs" />
     <Compile Include="Tracker.cs" />
     <Compile Include="Utils.cs" />
+    <Compile Include="World.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

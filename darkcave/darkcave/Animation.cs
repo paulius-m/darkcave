@@ -13,7 +13,7 @@ namespace darkcave
         public Vector3 Texture = Vector3.Zero;
 
         protected int Current;
-        private int step;
+        protected int Step;
 
         public int Delay = 10;
 
@@ -37,10 +37,10 @@ namespace darkcave
 
         protected bool Wait()
         {
-            step++;
-            if (step < Delay)
+            Step++;
+            if (Step < Delay)
                 return true;
-            step = 0;
+            Step = 0;
             return false;
         }
 
@@ -53,6 +53,7 @@ namespace darkcave
         public virtual void Reset()
         {
             Current = 0;
+            Step = 0;
         }
     }
 
@@ -160,6 +161,8 @@ namespace darkcave
                 {
                     instance = new AnimationSystem();
                     Game1.Instance.Components.Add(instance);
+                    instance.UpdateOrder = 100;
+
                 }
                 return instance;
             }

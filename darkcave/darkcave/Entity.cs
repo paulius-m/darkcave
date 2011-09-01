@@ -12,29 +12,50 @@ namespace darkcave
         public Node Node;
     }
 
-    public class Entity : Node, Instanced
+    public class Entity : Instanced
     {
 
         public Vector3 Speed;
-
+        public Vector3 Color = Vector3.One;
+        public Vector3 Postion;
+        public Vector3 Size = Vector3.One;
+        public BoundingBox CollisionBox;
         public float MaxSpeedX = 0.05f;
         public float MaxSpeedY = 0.2f;
         public float Gravity = 0.01f;
 
         public bool InJump;
 
-        public AnimationSet Frames;
+        protected AnimationSet Frames;
         public float RotationX;
 
-        private bool inAction;
+        protected bool InAction;
 
         public LocalEnvironment Environment;
+        public World World;
+        protected InstanceData Instance = new InstanceData();
 
         public Entity()
         {
-            Diffuse = Vector3.One;
             Size.X *= 0.9f;
-            Frames = new AnimationSet
+            Frames = SetTextures();
+        }
+
+        public BoundingBox FutureCollisionBox
+        {
+            get
+            {
+                var minV = new Vector3(Postion.X - Size.X, Postion.Y - Size.Y, 0);
+                var maxV = new Vector3(Postion.X + Size.X, Postion.Y + Size.Y, 0);
+
+                return new BoundingBox(minV, maxV);
+            }
+        
+        }
+
+        protected virtual AnimationSet SetTextures()
+        {
+            return new AnimationSet
             {
                 Frames = {
                     { "run", new Animation{ 
@@ -54,25 +75,25 @@ namespace darkcave
                         Texture = new Vector3 (0, 0, 0),
                         Position = new Vector3(0, 0, 0),
                         Count = 1 }
-                    }
+                    },
+                    {"damage", new TransitionAnimation{
+                        Texture = new Vector3 (1, 2, 0),
+                        Position = new Vector3(1, 2, 0),  
+                        End = EndDamage,
+                        Count = 2, Delay = 20}
+                    },
                 }
             };
         }
 
-        public BoundingBox FutureCollisionBox
+        public void Move()
         {
-            get
-            {
-                var minV = new Vector3(Postion.X - Size.X, Postion.Y - Size.Y, 0);
-                var maxV = new Vector3(Postion.X + Size.X, Postion.Y + Size.Y, 0);
-
-                return new BoundingBox(minV, maxV);
-            }
-        
+            if (!InAction)
+                ApplyControl();
+            ApplyForces();
         }
 
-
-        public void Move()
+        protected virtual void ApplyControl()
         {
             Keys[] keys = Keyboard.GetState().GetPressedKeys();
 
@@ -82,7 +103,7 @@ namespace darkcave
                 {
                     case Keys.O:
                         Frames.SetActive("attack");
-                        inAction = true;
+                        InAction = true;
                         break;
                     case Keys.S:
                         //Speed.Y -= MaxSpeed;
@@ -96,50 +117,33 @@ namespace darkcave
                         RotationX = 0;
                         break;
                     case Keys.Space:
-                        if (Speed.Y == 0)
-                            Speed.Y += MaxSpeedY;
+                        //if (Speed.Y == 0)
+                        Speed.Y = MaxSpeedY;
                         break;
                 }
             }
-            if (inAction)
-                goto end;
+        }
 
-            if (Speed.X != 0)
-                Frames.SetActive("run");
-            else
-                Frames.SetActive("idle");
-            end:
+        protected virtual void ApplyForces()
+        {
             Speed.Y -= Gravity;
         }
 
-        void Attack()
-        { 
-        
-        }
-
-        void EndAttack()
-        {
-            inAction = false;
-        }
-
-
         void Instanced.GetInstanceData( Instancer instancer)
         {
-            Instance.Color = Vector3.One;
+            Instance.Color = Color;
             if (Environment.Node != null)
             {
-                Instance.Light = Environment.Node.Diffuse + Environment.Node.Ambience;
-                Environment.Node.Ambience = Vector3.One;
+                Instance.Light = Environment.Node.Incident + Environment.Node.Emmision;
+                //Environment.Node.Ambience = Vector3.One;
             }
-            else
-                Instance.Light = Diffuse + Ambience;
 
             Instance.Texture = Frames.Active.Texture;
             instancer.AddInstance(Instance);
         }
 
 
-        public new void SetPosition(Vector3 pos)
+        public void SetPosition(Vector3 pos)
         {
             Postion = pos;
 
@@ -148,16 +152,84 @@ namespace darkcave
 
             CollisionBox = new BoundingBox(minV, maxV);
             Instance.World = Matrix.CreateRotationY(RotationX) * Matrix.CreateTranslation(pos);
-
         }
 
         public void Update()
         {
-           SetPosition(Postion + Speed);
-
-           Speed.X *= 0.5f;
-           if (Math.Abs(Speed.X) < 0.001f)
-               Speed.X = 0;
+            if (InAction == false)
+            {
+                if (Speed.X != 0)
+                    Frames.SetActive("run");
+                else
+                    Frames.SetActive("idle");
+            }
+            SetPosition(Postion + Speed);
+            Speed.X *= 0.5f;
+            if (Math.Abs(Speed.X) < 0.001f)
+                Speed.X = 0;
         }
+
+        void Attack()
+        {
+            if (World != null)
+                World.Damage(this, this.CollisionBox, 10);
+        }
+
+        void EndAttack()
+        {
+            InAction = false;
+        }
+
+        public void Damage()
+        {
+            Color = new Vector3(1,0,0);
+            Frames.SetActive("damage");
+            InAction = true;
+        }
+
+        private void EndDamage()
+        {
+            Color = Vector3.One;
+            InAction = false;
+        }
+    }
+
+    public class Enemy : Entity
+    {
+
+        
+        Random r = new Random();
+        int count = 0;
+        bool goleft;
+        protected override void  ApplyControl()
+        {
+            Frames.SetActive("attack");
+            InAction = true;
+            return;
+            count++;
+            if (count >= 30)
+            {
+                goleft = r.NextDouble() > 0.5f;
+                count = 0;
+            }
+
+            if (goleft)
+            {
+                Speed.X -= MaxSpeedX;
+                RotationX = MathHelper.Pi;
+            }
+            else
+            {
+                Speed.X += MaxSpeedX;
+                RotationX = 0;
+            }
+        }
+
+        protected override AnimationSet SetTextures()
+        {
+            return base.SetTextures();
+        }
+
+
     }
 }
