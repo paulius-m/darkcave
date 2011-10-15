@@ -36,40 +36,38 @@ namespace darkcave
 
     public interface Instanced
     {
-        void GetInstanceData(Instancer instancer);
+        void GetInstanceData(RenderGroup instancer);
     }
 
-    public class Instancer
+    public class RenderGroup
     {
-        DynamicVertexBuffer instanceVertexBuffer;
-        
+        public string Name;
+        public Texture2D Texture;
+        public DynamicVertexBuffer instanceVertexBuffer;
+        public Camera Camera;
         InstanceData[] instances;
-        int instanceCount;
+        public int InstanceCount;
 
-        Model model;
-        Texture2D atlas;
-        String textureName;
+        public Instanced[] Instances;
 
-        protected GraphicsDevice Device;
-
-        public Instancer(int bufferSize, string textureName = "atlas")
+        public RenderGroup(int bufferSize, string name, params Instanced[] group)
         {
-            instances = new InstanceData[bufferSize];
-            this.textureName = textureName;
-            Device = Game1.Instance.GraphicsDevice;
+            Name = name;
+            this.instances = new InstanceData[bufferSize];
+            Instances = group;
         }
 
         public void Load()
         {
-            model = Game1.Instance.Content.Load<Model>("plane2");
-            Effect ef = Game1.Instance.Content.Load<Effect>("InstancedModel");
-            atlas = Game1.Instance.Content.Load<Texture2D>(textureName);
-            foreach (ModelMesh mesh in model.Meshes)
+            Texture = Game1.Instance.Content.Load<Texture2D>(Name);
+        }
+
+        public virtual void GetInstanceData()
+        {
+            Reset();
+            foreach (var instance in Instances)
             {
-                foreach (ModelMeshPart meshPart in mesh.MeshParts)
-                {
-                    meshPart.Effect = ef.Clone();
-                }
+                instance.GetInstanceData(this);
             }
         }
 
@@ -80,63 +78,173 @@ namespace darkcave
 
         public void AddInstance(InstanceData data)
         {
-            instances[instanceCount++] = data;
+            instances[InstanceCount++] = data;
         }
 
         public void Reset()
         {
-            instanceCount = 0;
+            InstanceCount = 0;
         }
 
-        public void Draw(Camera cam)
+        public void Update(Camera cam)
         {
-            if (instanceCount == 0)
+            Camera = cam;
+            GetInstanceData();
+            if (InstanceCount == 0)
                 return;
 
-            if ((instanceVertexBuffer == null) || (instanceCount > instanceVertexBuffer.VertexCount))
+            if ((instanceVertexBuffer == null) || (InstanceCount > instanceVertexBuffer.VertexCount))
             {
                 if (instanceVertexBuffer != null)
                     instanceVertexBuffer.Dispose();
 
-                instanceVertexBuffer = new DynamicVertexBuffer(Game1.Instance.GraphicsDevice, typeof(InstanceData),
-                                                               instanceCount, BufferUsage.WriteOnly);
+                instanceVertexBuffer = new DynamicVertexBuffer(
+                    Game1.Instance.GraphicsDevice,
+                    typeof(InstanceData),
+                    InstanceCount,
+                    BufferUsage.WriteOnly);
             }
 
-            // Transfer the latest instance transform matrices into the instanceVertexBuffer.
-            instanceVertexBuffer.SetData(instances, 0, instanceCount, SetDataOptions.Discard);
+            instanceVertexBuffer.SetData(instances, 0, InstanceCount, SetDataOptions.Discard);
+        }
+    }
 
+    public class Renderer
+    {
+        Model model;
+        public List<RenderGroup> Groups = new List<RenderGroup>();
+        protected GraphicsDevice Device;
+
+        RenderTarget2D shadowmaptarget;
+        RenderTarget2D zmap;
+        RenderTarget2D polar;
+
+        RenderTarget2D color;
+        RenderTarget2D opacity;
+
+        public DynamicVertexBuffer instanceVertexBuffer;
+        public Renderer()
+        {
+            Device = Game1.Instance.GraphicsDevice;
+            instanceVertexBuffer = new DynamicVertexBuffer(
+                    Game1.Instance.GraphicsDevice,
+                    typeof(InstanceData),
+                    1,
+                    BufferUsage.WriteOnly);
+
+            instanceVertexBuffer.SetData( new []{new InstanceData { World = Matrix.Identity }}, 0, 1, SetDataOptions.Discard);
+        }
+
+        public void Load()
+        {
+            model = Game1.Instance.Content.Load<Model>("plane2");
+            Effect ef = Game1.Instance.Content.Load<Effect>("InstancedModel");
+            
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
                 {
-                    // Tell the GPU to read from both the model vertex buffer plus our instanceVertexBuffer.
-                    Game1.Instance.GraphicsDevice.SetVertexBuffers(
-                        new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
-                        new VertexBufferBinding(instanceVertexBuffer, 0, 1)
-                    );
+                    meshPart.Effect = ef.Clone();
+                }
+            }
 
-                    Game1.Instance.GraphicsDevice.Indices = meshPart.IndexBuffer;
+            foreach (var group in Groups)
+                group.Load();
+
+            PresentationParameters pp = Device.PresentationParameters;
+            color = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
+            opacity = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Alpha8, DepthFormat.None);
+            polar = new RenderTarget2D(Device, 1024, 1024, true, SurfaceFormat.Rg32, DepthFormat.None);
+            zmap = new RenderTarget2D(Device, 1024, 1, true, SurfaceFormat.Rg32, DepthFormat.None);
+        }
+
+        public void Draw(Camera cam)
+        {
+            EffectPass pass;
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (ModelMeshPart meshPart in mesh.MeshParts)
+                {
 
                     // Set up the instance rendering effect.
                     Effect effect = meshPart.Effect;
 
-                    effect.CurrentTechnique = effect.Techniques["HardwareInstancing"];
-
                     effect.Parameters["World"].SetValue(Matrix.Identity);
                     effect.Parameters["View"].SetValue(cam.View);
                     effect.Parameters["Projection"].SetValue(cam.Projection);
-                    effect.Parameters["Texture"].SetValue(atlas);
+                    effect.Parameters["Light"].SetValue(Game1.Instance.player.Postion);
+
+                    Device.Indices = meshPart.IndexBuffer;
+                    effect.CurrentTechnique = effect.Techniques["ShadowMapInstancing"];
+
+                    Device.SetRenderTargets(color, opacity);
                     
-                    // Draw all the instance copies in a single call.
-                    foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                    foreach (var group in Groups)
                     {
+                        group.Update(cam);
+                        if (group.InstanceCount == 0)
+                            continue;
+
+                        effect.Parameters["Texture"].SetValue(group.Texture);
+
+                        Device.SetVertexBuffers(
+                            new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
+                            new VertexBufferBinding(group.instanceVertexBuffer, 0, 1)
+                        );
+
+                        pass = effect.CurrentTechnique.Passes[0];
                         pass.Apply();
 
-                        Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, instanceCount);
+                        Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, group.InstanceCount);
                     }
+
+                    Device.SetRenderTarget(polar);
+                    effect.CurrentTechnique = effect.Techniques["ZMap"];
+                    effect.Parameters["Shadow"].SetValue(opacity);
+                    effect.Parameters["Texture"].SetValue(color);
+
+                    //shadowmaptarget.SaveAsPng(System.IO.File.OpenWrite("D:\\1.png"), 500, 500);
+
+                    var position = new Vector3(0, 0, 10);
+                    var target = new Vector3(0, 0, 0);
+                    Matrix view = Matrix.CreateLookAt(position, target, Vector3.Up);
+                    Matrix proj = Matrix.CreateOrthographic(1, 1, 1.0f, 1000.0f);
+
+                    effect.Parameters["View"].SetValue(view);
+                    effect.Parameters["Projection"].SetValue(proj);
+
+                    Device.SetVertexBuffers(
+                        new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
+                        new VertexBufferBinding(instanceVertexBuffer, 0, 1)
+                    );
+                    pass = effect.CurrentTechnique.Passes[0];
+                    pass.Apply();
+                    Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+
+                    //using( System.IO.Stream f = System.IO.File.Create("D:\\z.png"))
+                    //    shadowmaptarget.SaveAsPng(f, shadowmaptarget.Width, shadowmaptarget.Height);
+                    Device.SetRenderTarget(zmap);
+                    effect.Parameters["Shadow"].SetValue(polar);
+                    pass = effect.CurrentTechnique.Passes[1];
+                    pass.Apply();
+                    Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+
+
+                    Device.SetRenderTarget(null);
+
+                    effect.Parameters["Shadow"].SetValue(zmap);
+                    effect.CurrentTechnique = effect.Techniques["Final"];
+                    pass = effect.CurrentTechnique.Passes[0];
+                    pass.Apply();
+                    Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
                 }
             }
         }
+
+
+
+
+
 
     }
 }

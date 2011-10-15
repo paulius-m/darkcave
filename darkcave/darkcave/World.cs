@@ -8,21 +8,6 @@ namespace darkcave
 {
     public class World : GameComponent
     {
-        /*
-        private class Interaction
-        {
-            public Entity Sender;
-            public Entity Receiver;
-            public float Amount;
-
-            public Interaction Action;
-            public void Apply()
-            {
-
-            }
-
-        }*/
-
         public delegate void Interaction();
 
         public List<Entity> Entities = new List<Entity>();
@@ -57,7 +42,7 @@ namespace darkcave
 
         }
 
-        public void Damage(Entity sender, BoundingBox area, float amount)
+        public void Damage(Entity sender, BoundingSphere area, float amount)
         {
             var receiver = getCollided(area, sender);
             if (receiver == null)
@@ -65,7 +50,7 @@ namespace darkcave
             actions[count++] = () => {ApplyDamage(receiver,amount, sender);} ;
         }
 
-        private Entity getCollided(BoundingBox area, Entity exept)
+        private Entity getCollided(BoundingSphere area, Entity exept)
         {
             foreach (var entity in Entities)
             {

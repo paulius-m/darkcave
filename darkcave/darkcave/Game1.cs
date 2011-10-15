@@ -11,19 +11,16 @@ using Microsoft.Xna.Framework.Media;
 
 namespace darkcave
 {
-    /// <summary>
-    /// This is the main type for your game
-    /// </summary>
     public class Game1 : Microsoft.Xna.Framework.Game
     {
         public GraphicsDeviceManager graphics;
 
         Map map;
-        Instancer render;
-        Instancer playerRender;
+        Renderer render;
+
         Camera cam;
-        Entity player;
-        Enemy enemy;
+        public Entity player;
+        Entity enemy;
 
         List<Entity> entities;
 
@@ -45,12 +42,12 @@ namespace darkcave
         protected override void Initialize()
         {
             IsMouseVisible = true;
-            render = new Instancer(200010);
-            playerRender = new Instancer(2, "char1");
+
+
             map = new Map (new Vector3(400, 100, 0));
             cam = new Camera();
-            player = new Entity();
-            enemy = new Enemy();
+            player = EntityFactory.GetPlayer();
+            enemy = EntityFactory.GetWorm();
             entities = new List<Entity> { player, enemy };
             player.Postion = new Vector3(70, 100, 0);
             
@@ -59,6 +56,15 @@ namespace darkcave
             gameWorld.AddEntity(player);
             gameWorld.AddEntity(enemy);
             gameWorld.Map = map;
+
+            render = new Renderer();
+            render.Groups.Add(
+                new RenderGroup(40000, "atlas", map)
+                );
+            render.Groups.Add(
+                new RenderGroup(2, "char1", enemy )
+                );
+
             //enemy.SetType(new NodeType { Texture = new Vector3(0, 2, 0) });
 
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
@@ -70,7 +76,6 @@ namespace darkcave
         protected override void LoadContent()
         {
             render.Load();
-            playerRender.Load();
         }
 
         protected override void UnloadContent()
@@ -102,7 +107,7 @@ namespace darkcave
 
                 if (mouse.MiddleButton == ButtonState.Pressed && mouse.MiddleButton != oldstate.MiddleButton)
                 {
-                    map.SpawnLight(player.Postion);
+                    map.SpawnLight(point);
                 }
             }
 
@@ -121,14 +126,8 @@ namespace darkcave
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-            render.Reset();
-            playerRender.Reset();
-            map.AddToDraw(cam, render);
-            playerRender.AddInstance(player);
-            playerRender.AddInstance(enemy);
+            GraphicsDevice.Clear(Color.White);
             render.Draw(cam);
-            playerRender.Draw(cam);
         }
     }
 }

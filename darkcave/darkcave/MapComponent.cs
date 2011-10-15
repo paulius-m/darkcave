@@ -113,11 +113,7 @@ namespace darkcave
                     {
                         sum += LightField[0][x, y] * MathHelper.Clamp(Vector3.Dot(hit.LightDirection, Utils.Rays[i2]), 0, 1);
                     }
-                    else if (hit.Type.Opacity == 1 && node.Type.Opacity == 1)
-                    {
-                        /*dark*/
-                    }
-                    else
+                    else if (hit.Type.Opacity != 1 || node.Type.Opacity != 1)
                     {
                         sum += LightField[0][x, y];
                         eSum += LightField[1][x, y];

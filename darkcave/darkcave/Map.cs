@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace darkcave
 {
-    public class Map
+    public class Map : Instanced
     {
         public Vector3 Size;
         private readonly int X;
@@ -41,8 +41,8 @@ namespace darkcave
             {
                 double x = i1 / Size.X;
                     
-                double noise = Noise.NextOctave1D(1, -x, 0) / 5 + 0.5f;
-                double noise2 = Math.Abs(Noise.NextOctave1D(2, x, 2.5f)) / 10;
+                double noise = Noise.NextOctave1D(3, -x, 2.5f) / 5 + 0.5f;
+                double noise2 = Math.Abs(Noise.NextOctave1D(3, x, 2.5f)) / 10;
 
 
 
@@ -156,7 +156,7 @@ namespace darkcave
                 var dist = (r>len?len:r) * dir;
                 var box = new BoundingBox(ent.CollisionBox.Min + dist, ent.CollisionBox.Max + dist);
 
-                int minX = (int)box.Min.X - 1;
+                int minX = (int)box.Min.X - 2;
                 int maxX = (int)box.Max.X + 2;
                 int minY = (int)box.Min.Y - 1;
                 int maxY = (int)box.Max.Y + 2;
@@ -190,8 +190,9 @@ namespace darkcave
             return;
         }
 
-        public void AddToDraw(Camera cam, Instancer instancer)
+        public void GetInstanceData(RenderGroup RenderGroup)
         {
+            var cam = RenderGroup.Camera;
             int startx = (int)MathHelper.Clamp(cam.Position.X - cam.ViewSize.X / 2, 0, X);
             int endx = (int)MathHelper.Clamp(cam.Position.X + cam.ViewSize.X / 2 + 2, 0, X);
             int starty = (int)MathHelper.Clamp(cam.Position.Y - cam.ViewSize.Y / 2, 0, Y);
@@ -206,7 +207,7 @@ namespace darkcave
                     {
                         var testres = cam.Frustrum.Contains(node.CollisionBox);
                         if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains)
-                            instancer.AddInstance(node);
+                            RenderGroup.AddInstance(node);
                     }
                 }
         }
@@ -220,6 +221,5 @@ namespace darkcave
         {
             lighting.lights.Add(new PointLight { Position = position, ForeGround = ForeGround, X = X, Y = Y });
         }
-
     }
 }

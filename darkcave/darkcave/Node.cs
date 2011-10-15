@@ -42,8 +42,6 @@ namespace darkcave
         public delegate void Collision(Node node, Entity player, Vector3 speed);
         public delegate Vector3 LightColor(Node node);
         public Collision ResolveCollision;
-        public LightColor GetDiffuseColor;
-        public LightColor GetAmbientColor;
 
         public NodeType AddDecals(params IDecal[] decals)
         {
@@ -57,7 +55,7 @@ namespace darkcave
                 dec.Init(node);
         }
 
-        public virtual void GetInstanceData(InstanceData data, Instancer instancer)
+        public virtual void GetInstanceData(InstanceData data, RenderGroup RenderGroup)
         {
         }
 
@@ -94,13 +92,13 @@ namespace darkcave
             else Animation.SetActive("0000");
         }
 
-        public override void GetInstanceData(InstanceData data, Instancer instancer)
+        public override void GetInstanceData(InstanceData data, RenderGroup RenderGroup)
         {
             if (OldNodeType != null && OldNodeType.CanRender)
             {
                 data.Texture = OldNodeType.Texture;
                 data.Color = OldNodeType.Color;
-                instancer.AddInstance(data);
+                RenderGroup.AddInstance(data);
             }
         }
 
@@ -131,8 +129,6 @@ namespace darkcave
                         Texture = new Vector3(0, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
-                        GetDiffuseColor = DiffuseAmbientLight,
-                        GetAmbientColor = (Node node) => { return node.Emmision * node.Type.Color; },
                         Textures = { 
                             {"0000", new Vector3(0, 0, 0)},
                             {"1000", new Vector3(0, 1, 0)},
@@ -156,12 +152,10 @@ namespace darkcave
                 case NodeTypes.Soil:
                     o = new NodeType
                     {
-                        Color = new Vector3(.6f, .4f, 0.3f),
-                        Texture = new Vector3(0, 0, 0),
+                        Color = new Vector3(.4f, .3f, 0.3f),
+                        Texture = new Vector3(13, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
-                        GetDiffuseColor = DiffuseAmbientLight,
-                        GetAmbientColor = (Node node) => { return node.Emmision * node.Type.Color; },
                     }.AddDecals(DecalFactory.Get(DecalType.Grass));
                     break;
                 case NodeTypes.Air:
@@ -171,8 +165,6 @@ namespace darkcave
                         Texture = new Vector3(14, 0, 0),
                         CanCollide = false,
                         CanRender = false,
-                        GetDiffuseColor = DiffuseLight,
-                        GetAmbientColor = (Node node) => { return node.Emmision; },
                     };
                     break;
                 case NodeTypes.Water:
@@ -189,8 +181,6 @@ namespace darkcave
                         Color = new Vector3(0.5f, 0.5f, 1),
                         Opacity = 0.1f,
                         ResolveCollision = Slowdown,
-                        GetDiffuseColor = DiffuseLight,
-                        GetAmbientColor = (Node node) => { return node.Emmision; },
                     };
                     break;
                 case NodeTypes.Fire:
@@ -200,8 +190,6 @@ namespace darkcave
                         Texture = new Vector3(15, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
-                        GetDiffuseColor = (Node node) => { return node.Type.Color; },
-                        GetAmbientColor = (Node node) => { return node.Type.Color; }
                     };
                     break;
 
@@ -211,8 +199,6 @@ namespace darkcave
                         Color = Vector3.One,
                         Texture = new Vector3(15, 15, 0),
                         Opacity = 0.2f,
-                        GetAmbientColor = (Node n) => { return n.Emmision; },
-                        GetDiffuseColor = (Node n) => { return n.Incident; },
                         CanCollide = false,
                     };
                     break;
@@ -221,8 +207,6 @@ namespace darkcave
                     o = new NodeType();
                                         
                     o.Color = Vector3.One;
-                    o.GetAmbientColor = (Node n) => { return n.Emmision * n.Type.Opacity; };
-                    o.GetDiffuseColor = (Node n) => { return n.Incident * n.Type.Opacity; };
                     o.CanCollide = true;
                     o.ResolveCollision = NodeFactory.HardCollision;
                     o.Opacity = 1;
@@ -326,7 +310,7 @@ namespace darkcave
             CollisionBox = new BoundingBox(minV, maxV);
         }
 
-        public void GetInstanceData(Instancer instancer)
+        public void GetInstanceData(RenderGroup RenderGroup)
         {
             
             Instance.Color = Type.Color;
@@ -335,11 +319,11 @@ namespace darkcave
             else*/
             Instance.Light = (Incident + Emmision);
             Instance.Texture = Type.Texture;
-            Type.GetInstanceData(Instance, instancer);
-            instancer.AddInstance(Instance);
+            Type.GetInstanceData(Instance, RenderGroup);
+            RenderGroup.AddInstance(Instance);
             foreach (IDecal decal in Type.Decals)
             {
-                decal.GetInstanceData(instancer);
+                decal.GetInstanceData(RenderGroup);
             }
 
         }
@@ -347,16 +331,6 @@ namespace darkcave
         public void ResolveCollision(Entity player, Vector3 speed)
         {
             Type.ResolveCollision(this, player, speed);
-        }
-
-        public Vector3 GetLightColor()
-        {
-            return Type.GetDiffuseColor(this);
-        }
-
-        public Vector3 GetAmbientColor()
-        {
-            return Type.GetAmbientColor(this);
         }
     }
 }

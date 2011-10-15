@@ -40,12 +40,12 @@ namespace darkcave
             Instance.World = Matrix.CreateTranslation(pos);
         }
 
-        public void GetInstanceData(Instancer instancer)
+        public void GetInstanceData(RenderGroup RenderGroup)
         {
             Instance.Color = Color;
             Instance.Light = Node.Incident + Node.Emmision;
             Instance.Texture = Texture;
-            instancer.AddInstance(Instance);
+            RenderGroup.AddInstance(Instance);
         }
     }
 
