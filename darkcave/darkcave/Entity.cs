@@ -12,24 +12,25 @@ namespace darkcave
         public Node Node;
     }
 
-    public class Tool
+    public class BasicWeapon
     {
         public BoundingSphere CollisionSphere;
         public int Damage;
     }
 
-
     public class Entity : Instanced
     {
         public Vector3 Speed;
+        public Vector3 Force;
         public Vector3 Color = Vector3.One / 2;
+        public float Opacity = 1;
         public Vector3 Postion;
         public Vector3 Scale = Vector3.One;
         public Vector3 Size = Vector3.One;
         public BoundingBox CollisionBox;
         public float MaxSpeedX = 0.1f;
-        public float MaxSpeedY = 0.2f;
-        public float Gravity = 0.01f;
+        public float MaxSpeedY = 0.25f;
+        public float Gravity = 0.02f;
 
         public bool InJump;
 
@@ -37,11 +38,14 @@ namespace darkcave
         public int XDirection = 1;
         public float RotationX;
 
-        protected bool InAction;
+        public bool InAction;
 
         public LocalEnvironment Environment;
         public World World;
-        protected InstanceData Instance = new InstanceData();
+        public InstanceData Instance = new InstanceData();
+
+        public int Health = 10;
+        public bool Alive = true;
 
         public interface IController
         {
@@ -49,18 +53,7 @@ namespace darkcave
         }
 
         public IController Control;
-        public Tool Weapon;
-
-        public BoundingBox FutureCollisionBox
-        {
-            get
-            {
-                var minV = new Vector3(Postion.X - Size.X, Postion.Y - Size.Y, 0);
-                var maxV = new Vector3(Postion.X + Size.X, Postion.Y + Size.Y, 0);
-
-                return new BoundingBox(minV, maxV);
-            }
-        }
+        public BasicWeapon Weapon;
 
         public void Move()
         {
@@ -73,19 +66,24 @@ namespace darkcave
 
         protected virtual void ApplyForces()
         {
+            Speed += Force;
             Speed.Y -= Gravity;
             Speed.X *= 0.5f;
+            Force = Vector3.Zero;
 
             if (Math.Abs(Speed.X) < 0.001f)
                 Speed.X = 0;
+
+            if (Math.Abs(Speed.Y) < 0.00001f)
+                Speed.Y = 0;
         }
 
         void Instanced.GetInstanceData(RenderGroup RenderGroup)
         {
-            Instance.Color = Color;
+            Instance.Color = new Color(Color);
             if (Environment.Node != null)
             {
-                Instance.Light = Environment.Node.Incident + Environment.Node.Emmision;
+                Instance.Light = new Vector4(Environment.Node.Incident + Environment.Node.Emmision, Opacity);
             }
 
             Instance.Texture = Frames.Active.Texture;
@@ -120,28 +118,53 @@ namespace darkcave
         {
             Frames.SetActive("attack");
             InAction = true;
+        }
 
+        public void AttackAction()
+        {
             Vector3 hitpoint = new Vector3(Postion.X + XDirection * Weapon.CollisionSphere.Center.X, Postion.Y, 0);
 
             if (World != null)
                 World.Damage(this, new BoundingSphere(hitpoint, Weapon.CollisionSphere.Radius), Weapon.Damage);
         }
 
+
         public void EndAttack()
         {
             InAction = false;
         }
 
-        public void Damage()
+        public void Damage(int amount)
         {
-            Color = new Vector3(1,0,0);
+            Health -= amount;
+
+            if (Health <= 0)
+            {
+                Die();
+                return;
+            }
+
             Frames.SetActive("damage");
             InAction = true;
+
         }
 
         public void EndDamage()
         {
+            
             Color = Vector3.One;
+            InAction = false;
+        }
+
+        public void Die()
+        {
+            Frames.SetActive("die");
+            InAction = true;
+        }
+
+        public void EndDie()
+        {
+            Alive = false;
             InAction = false;
         }
     }
@@ -152,11 +175,13 @@ namespace darkcave
         {
             var e = new Entity { 
                 Control = new KeyboardController(),
-                Weapon = new Tool
+                Weapon = new BasicWeapon
                 {
                     CollisionSphere = new BoundingSphere { Center = new Vector3(0.5f, 0, 0), Radius = .25f },
-                    Damage = 10
-                }
+                    Damage = 1
+                },
+
+                Size = new Vector3(.4f, 1f, 0),
             };
 
             e.Frames = new AnimationSet
@@ -171,7 +196,7 @@ namespace darkcave
                             Texture = new Vector3(0, 0, 0),
                             Position = new Vector3(0, 0, 0),
                             EventFrame = 3,
-                            Event = e.Attack,
+                            Event = e.AttackAction,
                             End = e.EndAttack,
                             Count = 6 , Delay = 6}
                         },
@@ -186,6 +211,12 @@ namespace darkcave
                             End = e.EndDamage,
                             Count = 2, Delay = 20}
                         },
+                        {"die", new TransitionAnimation{
+                            Texture = new Vector3 (1, 2, 0),
+                            Position = new Vector3(1, 2, 0),  
+                            End = e.EndDie,
+                            Count = 2, Delay = 20}
+                        },
                     }
             };
             return e;
@@ -196,10 +227,11 @@ namespace darkcave
             var e = new Entity
             {
                 MaxSpeedX = 0.02f,
+                Gravity = 0,
                 Control = new AIController(),
-                Weapon = new Tool {
+                Weapon = new BasicWeapon {
                         CollisionSphere = new BoundingSphere { Center = Vector3.Zero, Radius = .5f },
-                        Damage = 10
+                        Damage = 1
                     }
             };
             e.Frames = new AnimationSet
@@ -216,10 +248,38 @@ namespace darkcave
                         Count = 1 }
                     },
                     {"damage", new TransitionAnimation{
-                        Texture = new Vector3 (2, 4, 0),
-                        Position = new Vector3(2, 4, 0),  
+                        Texture = new Vector3 (4, 4, 0),
+                        Position = new Vector3(4, 4, 0),  
                         End = e.EndDamage,
-                        Count = 1, Delay = 40}
+                        Count = 3, Delay = 20}
+                    },
+                    {"die", new TransitionAnimation{
+                        Texture = new Vector3 (4, 4, 0),
+                        Position = new Vector3(4, 4, 0),  
+                        End = e.EndDie,
+                        Count = 7, Delay = 8}
+                    },
+                }
+            };
+            return e;
+        }
+
+        public static Entity GetTorch()
+        {
+            var e = new Entity
+            {
+                Scale = new Vector3(0.5f, 0.5f, 0),
+                Control = new NullController(),
+                Gravity = 0,
+                Opacity = 0,
+            };
+            e.Frames = new AnimationSet
+            {
+                Frames = {
+                    { "idle", new Animation{
+                        Texture = new Vector3 (0, 15, 0),
+                        Position = new Vector3(0, 15, 0),
+                        Count = 3 }
                     },
                 }
             };
@@ -264,36 +324,41 @@ namespace darkcave
         public class AIController : Entity.IController
         {
             Random r = new Random();
-            int count = 0;
+            int state = 0;
             bool goleft;
+
+            Vector3 dir = new Vector3(1,0,0);
+            Vector3 check = new Vector3(0.5f, -1, 0);
+
+            Vector3[] dirs = new[] { 
+                Vector3.Right,
+                Vector3.Down,
+                Vector3.Left,
+                Vector3.Up
+            };
+
+            Vector3[] checks = new[] {
+                new Vector3(-0.5f, -1, 0),
+                new Vector3(-1, -0.5f, 0),
+                new Vector3(0.5f, 1, 0),
+                new Vector3(1, -0.5f, 0),
+                };
 
             public void Move(Entity ent)
             {
-                //Frames.SetActive("attack");
-                //InAction = true;
-                return;
-                count++;
-                if (count >= 30)
-                {
-                    goleft = r.NextDouble() > 0.5f;
-                    count = 0;
-                }
 
-                if (goleft)
-                {
-                    ent.Speed.X -= ent.MaxSpeedX;
-                    ent.RotationX = MathHelper.Pi;
-                    ent.XDirection = -1;
-                }
-                else
-                {
-                    ent.Speed.X += ent.MaxSpeedX;
-                    ent.XDirection = 1;
-                    ent.RotationX = 0;
-                }
+                ent.Speed = ent.MaxSpeedX * (dir);
+                ent.XDirection = 1;
+                ent.RotationX = 0;// MathHelper.Pi;
             }
         }
 
+        public class NullController : Entity.IController
+        {
+            public void Move(Entity ent)
+            {
+            }
+        }
     }
 
 

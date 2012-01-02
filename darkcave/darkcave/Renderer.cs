@@ -10,8 +10,8 @@ namespace darkcave
     public struct InstanceData : IVertexType
     {
         public Matrix World;
-        public Vector3 Color;
-        public Vector3 Light;
+        public Color Color;
+        public Vector4 Light;
         public Vector3 Texture;
 
         private readonly static VertexDeclaration vertexDeclaration = new VertexDeclaration
@@ -20,9 +20,9 @@ namespace darkcave
             new VertexElement(16, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 1),
             new VertexElement(32, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 2),
             new VertexElement(48, VertexElementFormat.Vector4, VertexElementUsage.BlendWeight, 3),
-            new VertexElement(64, VertexElementFormat.Vector3, VertexElementUsage.Color, 1),
-            new VertexElement(76, VertexElementFormat.Vector3, VertexElementUsage.Color, 2),
-            new VertexElement(88, VertexElementFormat.Vector3, VertexElementUsage.TextureCoordinate, 1)
+            new VertexElement(64, VertexElementFormat.Color, VertexElementUsage.Color, 1),
+            new VertexElement(68, VertexElementFormat.Vector4, VertexElementUsage.Color, 2),
+            new VertexElement(84, VertexElementFormat.Vector3, VertexElementUsage.TextureCoordinate, 1)
             );
 
         public VertexDeclaration VertexDeclaration
@@ -43,18 +43,19 @@ namespace darkcave
     {
         public string Name;
         public Texture2D Texture;
+        public int TileCount = 16;
         public DynamicVertexBuffer instanceVertexBuffer;
         public Camera Camera;
         InstanceData[] instances;
         public int InstanceCount;
 
-        public Instanced[] Instances;
+        public List<Instanced> Instances = new List<Instanced>();
 
         public RenderGroup(int bufferSize, string name, params Instanced[] group)
         {
             Name = name;
             this.instances = new InstanceData[bufferSize];
-            Instances = group;
+            Instances.AddRange(group);
         }
 
         public void Load()
@@ -109,22 +110,39 @@ namespace darkcave
         }
     }
 
+
+
+
     public class Renderer
     {
         Model model;
         public List<RenderGroup> Groups = new List<RenderGroup>();
         protected GraphicsDevice Device;
 
-        RenderTarget2D shadowmaptarget;
-        RenderTarget2D zmap;
+        List<RenderTarget2D> zmaps;
         RenderTarget2D polar;
 
         RenderTarget2D color;
         RenderTarget2D opacity;
+        RenderTarget2D ambience;
+
+        RenderTarget2D opacityScaled;
+        RenderTarget2D ambienceScaled;
+
+        RenderTarget2D shadow;
+
+        Camera planeCam;
+
+        List<Vector3> lights = new List<Vector3> ();
+
+        BasicEffect be;
+
 
         public DynamicVertexBuffer instanceVertexBuffer;
         public Renderer()
         {
+            planeCam = new Camera { View = Matrix.CreateLookAt(new Vector3(0, 0, 10), new Vector3(0, 0, 0), Vector3.Up), Projection = Matrix.CreateOrthographic(1f, 1f, 1f, 100.0f)};
+
             Device = Game1.Instance.GraphicsDevice;
             instanceVertexBuffer = new DynamicVertexBuffer(
                     Game1.Instance.GraphicsDevice,
@@ -133,6 +151,7 @@ namespace darkcave
                     BufferUsage.WriteOnly);
 
             instanceVertexBuffer.SetData( new []{new InstanceData { World = Matrix.Identity }}, 0, 1, SetDataOptions.Discard);
+
         }
 
         public void Load()
@@ -153,98 +172,204 @@ namespace darkcave
 
             PresentationParameters pp = Device.PresentationParameters;
             color = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
-            opacity = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Alpha8, DepthFormat.None);
-            polar = new RenderTarget2D(Device, 1024, 1024, true, SurfaceFormat.Rg32, DepthFormat.None);
-            zmap = new RenderTarget2D(Device, 1024, 1, true, SurfaceFormat.Rg32, DepthFormat.None);
+            opacity = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
+            ambience = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
+
+            opacityScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 16, pp.BackBufferHeight / 16, true, SurfaceFormat.Color, DepthFormat.None);
+            ambienceScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 16, pp.BackBufferHeight / 16, true, SurfaceFormat.Color, DepthFormat.None);
+
+            polar = new RenderTarget2D(Device, 1024, 512, true, SurfaceFormat.Rg32, DepthFormat.None);
+            zmaps = new List<RenderTarget2D>();
+            shadow = new RenderTarget2D(Device, pp.BackBufferWidth/2, pp.BackBufferHeight/2, true, SurfaceFormat.Color, DepthFormat.None); 
+            //new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+
+            be = new BasicEffect(Device);
+        }
+
+        public void AddLight(Vector3 pos)
+        {
+            lights.Add(pos);
+            zmaps.Add(new RenderTarget2D(Device, 1024, 1, true, SurfaceFormat.Rg32, DepthFormat.None));
         }
 
         public void Draw(Camera cam)
         {
-            EffectPass pass;
-            foreach (ModelMesh mesh in model.Meshes)
+            render(model.Meshes[0].MeshParts[0], cam);
+            /*
+            var meshPart = model.Meshes[0].MeshParts[0];
+
+            Effect effect = meshPart.Effect;
+
+
+            var raster = new RasterizerState();
+            raster.FillMode = FillMode.WireFrame;
+            var old = Device.RasterizerState;
+            Device.RasterizerState = raster;
+            RenderInstances2(meshPart, effect, cam);
+
+            Device.RasterizerState = old;*/
+        }
+
+        private void render(ModelMeshPart meshPart, Camera cam)
+        {
+            // Set up the instance rendering effect.
+            Effect effect = meshPart.Effect;
+
+            RenderInstances(meshPart, effect, cam);
+
+            Device.SetVertexBuffers(
+                new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
+                new VertexBufferBinding(instanceVertexBuffer, 0, 1)
+            );
+            effect.Parameters["View"].SetValue(planeCam.View);
+            effect.Parameters["Projection"].SetValue(planeCam.Projection);
+
+            RenderShadows(meshPart, effect, cam);
+
+            ScaleDown(meshPart, effect);
+            Device.SetRenderTarget(null);
+            effect.Parameters["Texture"].SetValue(color);
+            effect.Parameters["Ambient"].SetValue(ambienceScaled);
+            effect.Parameters["Ambient2"].SetValue(opacityScaled);
+            effect.Parameters["Shadow"].SetValue(shadow);
+            effect.CurrentTechnique = effect.Techniques["Final"];
+            effect.CurrentTechnique.Passes[0].Apply();
+            Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+        /*    
+            using (System.IO.Stream f = System.IO.File.Create("D:\\opacity.png"))
+                opacity.SaveAsPng(f, opacity.Width, opacity.Height);
+
+using (System.IO.Stream f = System.IO.File.Create("D:\\color.png"))
+    color.SaveAsPng(f, color.Width, color.Height);
+using (System.IO.Stream f = System.IO.File.Create("D:\\ambient.png"))
+    ambience.SaveAsPng(f, ambience.Width, ambience.Height);
+
+using (System.IO.Stream f = System.IO.File.Create("D:\\shadow.png"))
+    shadow.SaveAsPng(f, shadow.Width, shadow.Height);*/
+        }
+
+        private Vector2 toScreenSpace(Vector3 r, Camera cam )
+        {
+            r = Vector3.Transform(r, cam.View);
+            r = Vector3.Transform(r, cam.Projection);
+
+            return new Vector2(r.X / 2 + .5f, -r.Y / 2 + 0.5f);
+        }
+
+        private void RenderInstances(ModelMeshPart meshPart, Effect effect, Camera cam)
+        {
+            effect.Parameters["View"].SetValue(cam.View);
+            effect.Parameters["Projection"].SetValue(cam.Projection);
+
+            Device.Indices = meshPart.IndexBuffer;
+            effect.CurrentTechnique = effect.Techniques["Color"];
+
+            Device.SetRenderTargets(color, opacity, ambience);
+            Device.Clear(new Color(1f,1f,1f, 0f));
+
+            foreach (var group in Groups)
             {
-                foreach (ModelMeshPart meshPart in mesh.MeshParts)
-                {
+                group.Update(cam);
+                if (group.InstanceCount == 0)
+                    continue;
 
-                    // Set up the instance rendering effect.
-                    Effect effect = meshPart.Effect;
+                effect.Parameters["Texture"].SetValue(group.Texture);
+                effect.Parameters["TileCount"].SetValue(group.TileCount);
+                Device.SetVertexBuffers(
+                    new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
+                    new VertexBufferBinding(group.instanceVertexBuffer, 0, 1)
+                );
 
-                    effect.Parameters["World"].SetValue(Matrix.Identity);
-                    effect.Parameters["View"].SetValue(cam.View);
-                    effect.Parameters["Projection"].SetValue(cam.Projection);
-                    effect.Parameters["Light"].SetValue(Game1.Instance.player.Postion);
+                effect.CurrentTechnique.Passes[0].Apply();
 
-                    Device.Indices = meshPart.IndexBuffer;
-                    effect.CurrentTechnique = effect.Techniques["ShadowMapInstancing"];
-
-                    Device.SetRenderTargets(color, opacity);
-                    
-                    foreach (var group in Groups)
-                    {
-                        group.Update(cam);
-                        if (group.InstanceCount == 0)
-                            continue;
-
-                        effect.Parameters["Texture"].SetValue(group.Texture);
-
-                        Device.SetVertexBuffers(
-                            new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
-                            new VertexBufferBinding(group.instanceVertexBuffer, 0, 1)
-                        );
-
-                        pass = effect.CurrentTechnique.Passes[0];
-                        pass.Apply();
-
-                        Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, group.InstanceCount);
-                    }
-
-                    Device.SetRenderTarget(polar);
-                    effect.CurrentTechnique = effect.Techniques["ZMap"];
-                    effect.Parameters["Shadow"].SetValue(opacity);
-                    effect.Parameters["Texture"].SetValue(color);
-
-                    //shadowmaptarget.SaveAsPng(System.IO.File.OpenWrite("D:\\1.png"), 500, 500);
-
-                    var position = new Vector3(0, 0, 10);
-                    var target = new Vector3(0, 0, 0);
-                    Matrix view = Matrix.CreateLookAt(position, target, Vector3.Up);
-                    Matrix proj = Matrix.CreateOrthographic(1, 1, 1.0f, 1000.0f);
-
-                    effect.Parameters["View"].SetValue(view);
-                    effect.Parameters["Projection"].SetValue(proj);
-
-                    Device.SetVertexBuffers(
-                        new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
-                        new VertexBufferBinding(instanceVertexBuffer, 0, 1)
-                    );
-                    pass = effect.CurrentTechnique.Passes[0];
-                    pass.Apply();
-                    Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
-
-                    //using( System.IO.Stream f = System.IO.File.Create("D:\\z.png"))
-                    //    shadowmaptarget.SaveAsPng(f, shadowmaptarget.Width, shadowmaptarget.Height);
-                    Device.SetRenderTarget(zmap);
-                    effect.Parameters["Shadow"].SetValue(polar);
-                    pass = effect.CurrentTechnique.Passes[1];
-                    pass.Apply();
-                    Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
-
-
-                    Device.SetRenderTarget(null);
-
-                    effect.Parameters["Shadow"].SetValue(zmap);
-                    effect.CurrentTechnique = effect.Techniques["Final"];
-                    pass = effect.CurrentTechnique.Passes[0];
-                    pass.Apply();
-                    Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
-                }
+                Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, group.InstanceCount);
             }
         }
 
 
+        private void RenderInstances2(ModelMeshPart meshPart, Effect effect, Camera cam)
+        {
+            effect.Parameters["View"].SetValue(cam.View);
+            effect.Parameters["Projection"].SetValue(cam.Projection);
+
+            Device.Indices = meshPart.IndexBuffer;
+            effect.CurrentTechnique = effect.Techniques["Wire"];
+
+            Device.Clear(Color.Black);
+
+            foreach (var group in Groups)
+            {
+                group.Update(cam);
+                if (group.InstanceCount == 0)
+                    continue;
+
+                effect.Parameters["Texture"].SetValue(group.Texture);
+                effect.Parameters["TileCount"].SetValue(group.TileCount);
+                Device.SetVertexBuffers(
+                    new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
+                    new VertexBufferBinding(group.instanceVertexBuffer, 0, 1)
+                );
+
+                effect.CurrentTechnique.Passes[0].Apply();
+
+                Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, group.InstanceCount);
+            }
+        }
 
 
+        private void ScaleDown(ModelMeshPart meshPart, Effect effect)
+        {
+            Device.SetRenderTargets(ambienceScaled, opacityScaled);
+            effect.CurrentTechnique = effect.Techniques["Repeat"];
+            effect.Parameters["Ambient"].SetValue(ambience);
+            effect.Parameters["Ambient2"].SetValue(opacity);
+            effect.CurrentTechnique.Passes[0].Apply();
+
+            Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+        }
+
+        private void RenderShadows(ModelMeshPart meshPart, Effect effect, Camera cam)
+        {
+            for (int i = 0; i < lights.Count; i++)
+            {
+                //Device.SetRenderTarget(polar);
+                //Device.Clear(new Color(1f, 1f, 1f, 0f));
+                Vector3 r = lights[i];
+
+                if (Vector3.Distance(r, cam.Target) > cam.ViewSize.Length())
+                    continue;
+
+                Device.SetRenderTarget(zmaps[i]);
+                effect.Parameters["Light"].SetValue(toScreenSpace(r, cam));
+                effect.Parameters["Shadow"].SetValue(opacity);
+
+                effect.CurrentTechnique = effect.Techniques["ZMap"];
+
+                //effect.CurrentTechnique.Passes[0].Apply();
+                //Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
 
 
+                //effect.Parameters["Shadow"].SetValue(polar);
+                effect.CurrentTechnique.Passes[1].Apply();
+                Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+            }
+
+            Device.SetRenderTarget(shadow);
+            Device.Clear(Color.Black);
+            
+            for (int i = 0; i < lights.Count; i++)
+            {
+                Vector3 r = lights[i];
+                if (Vector3.Distance(r, cam.Target) > cam.ViewSize.Length())
+                    continue;
+
+                effect.Parameters["Light"].SetValue(toScreenSpace(r, cam));
+
+                effect.Parameters["Shadow"].SetValue(zmaps[i]);
+                effect.CurrentTechnique = effect.Techniques["ShadowAccum"];
+                effect.CurrentTechnique.Passes[0].Apply();
+                Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+            }
+        }
     }
 }

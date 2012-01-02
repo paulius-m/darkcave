@@ -13,7 +13,7 @@ namespace darkcave
         public Matrix Projection;
         public Matrix View;
         public Vector2 ViewSize;
-        private Viewport view;
+        public Viewport ViewPort;
 
         private Vector3 position;
         public Vector3 Position
@@ -41,7 +41,7 @@ namespace darkcave
         {
             int zoom = 32;
             GraphicsDeviceManager graphics = Game1.Instance.graphics;
-            view = Game1.Instance.GraphicsDevice.Viewport;
+            ViewPort = Game1.Instance.GraphicsDevice.Viewport;
             AspectRatio = graphics.GraphicsDevice.Viewport.Width * 1.0f / graphics.GraphicsDevice.Viewport.Height;
             ViewSize = new Vector2(graphics.GraphicsDevice.Viewport.Width / zoom, graphics.GraphicsDevice.Viewport.Height / zoom);
             Projection = Matrix.CreateOrthographic(ViewSize.X, ViewSize.Y, 1.0f, 1000.0f);
@@ -51,10 +51,23 @@ namespace darkcave
             updateView();
         }
 
-        public Ray Unproject(int mouseX, int mouseY)
+        public Camera(Vector2 size)
         {
-            Vector3 near = view.Unproject(new Vector3(mouseX, mouseY, 0), Projection, View, Matrix.Identity);
-            Vector3 far = view.Unproject(new Vector3(mouseX, mouseY, 1), Projection, View, Matrix.Identity);
+            int zoom = 32;
+
+            ViewSize = new Vector2(size.X / zoom, size.Y / zoom);
+            Projection = Matrix.CreateOrthographic(ViewSize.X, ViewSize.Y, 1.0f, 1000.0f);
+
+            position = new Vector3(50, 50, 40);
+            target = new Vector3(30, 30, 0);
+            updateView();
+        
+        }
+
+        public Ray Unproject(float mouseX, float mouseY)
+        {
+            Vector3 near = ViewPort.Unproject(new Vector3(mouseX, mouseY, 0), Projection, View, Matrix.Identity);
+            Vector3 far = ViewPort.Unproject(new Vector3(mouseX, mouseY, 1), Projection, View, Matrix.Identity);
             return new Ray(near,Vector3.Normalize(far - near));
         }
 

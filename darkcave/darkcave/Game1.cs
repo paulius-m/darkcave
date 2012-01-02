@@ -15,9 +15,10 @@ namespace darkcave
     {
         public GraphicsDeviceManager graphics;
 
-        Map map;
+        public Map map;
         Renderer render;
-
+        RenderGroup itemgroup;
+        RenderGroup entitygroup;
         Camera cam;
         public Entity player;
         Entity enemy;
@@ -43,18 +44,13 @@ namespace darkcave
         {
             IsMouseVisible = true;
 
-
             map = new Map (new Vector3(400, 100, 0));
             cam = new Camera();
             player = EntityFactory.GetPlayer();
-            enemy = EntityFactory.GetWorm();
-            entities = new List<Entity> { player, enemy };
             player.Postion = new Vector3(70, 100, 0);
             
-            enemy.Postion = new Vector3(72, 100, 0);
             gameWorld = new World();
             gameWorld.AddEntity(player);
-            gameWorld.AddEntity(enemy);
             gameWorld.Map = map;
 
             render = new Renderer();
@@ -62,9 +58,14 @@ namespace darkcave
                 new RenderGroup(40000, "atlas", map)
                 );
             render.Groups.Add(
-                new RenderGroup(2, "char1", enemy )
+                entitygroup = new RenderGroup(200, "char1", player )
                 );
 
+            render.Groups.Add(
+                itemgroup = new RenderGroup(2000, "char1")
+                );
+
+            itemgroup.TileCount = 32;
             //enemy.SetType(new NodeType { Texture = new Vector3(0, 2, 0) });
 
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
@@ -82,7 +83,7 @@ namespace darkcave
         {
         }
 
-        NodeTypes newNodeType = NodeTypes.Cloud;
+        NodeTypes newNodeType = NodeTypes.Fire;
         MouseState oldstate;
         protected override void Update(GameTime gameTime)
         {
@@ -98,17 +99,38 @@ namespace darkcave
                 if (mouse.LeftButton == ButtonState.Pressed && mouse.LeftButton == oldstate.LeftButton)
                 {
                     var type = NodeFactory.Get(newNodeType);
+                    //type.ResolveCollision = NodeFactory.Slope;
+                    //type.Texture = new Vector3(1f, 5f, 0);
                     node.SetType(type);
+
                 }
                 else if (mouse.RightButton == ButtonState.Pressed && mouse.RightButton == mouse.RightButton)
                 {
                     newNodeType = node.Type.Type;
+
                 }
 
                 if (mouse.MiddleButton == ButtonState.Pressed && mouse.MiddleButton != oldstate.MiddleButton)
                 {
                     map.SpawnLight(point);
+                    render.AddLight(point);
+                    var torch = EntityFactory.GetTorch();
+                    torch.SetPosition(point);
+                    gameWorld.AddEntity(torch);
+                    itemgroup.Instances.Add(torch);
                 }
+
+                if (Keyboard.GetState().IsKeyDown(Keys.L))
+                {
+                    var ent = EntityFactory.GetWorm();
+
+                    ent.Postion = point;
+
+                    gameWorld.AddEntity(ent);
+                    entitygroup.Instances.Add(ent);
+                }
+
+
             }
 
             oldstate = mouse;
@@ -126,8 +148,16 @@ namespace darkcave
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.White);
             render.Draw(cam);
         }
+
+        public void RemoveEntity(Entity entity)
+        {
+            foreach (var group in render.Groups)
+            {
+                group.Instances.Remove(entity);
+            }
+        }
+
     }
 }

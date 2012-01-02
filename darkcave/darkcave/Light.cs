@@ -100,7 +100,7 @@ namespace darkcave
 
                 float r = distances[a] == int.MaxValue ? 1 : distances[a];
 
-                for (; r < 100 && intensity > 0; r++)
+                for (; r < 10 && intensity > 0; r++)
                 {
                     int x = (int)((r * ray.X) + Position.X);
                     int y = (int)((r * ray.Y) + Position.Y);

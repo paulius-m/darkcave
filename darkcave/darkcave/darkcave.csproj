@@ -120,6 +120,7 @@
     <Compile Include="Game1.cs" />
     <Compile Include="Renderer.cs" />
     <Compile Include="Tracker.cs" />
+    <Compile Include="UI\Widget.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="World.cs" />
   </ItemGroup>

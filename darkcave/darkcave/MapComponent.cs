@@ -80,8 +80,8 @@ namespace darkcave
                 for (int i2 = (int) area.Min.Y; i2 < area.Max.Y; i2++)
                 {
                     var node = ForeGround[i1, i2];
-                    LightField[0][i1, i2] = (node.Incident + node.Emmision );
-                    LightField[1][i1, i2] =  (node.Emmision);
+                    LightField[0][i1, i2] = (node.Incident + node.Emmision ) * node.Type.Color;
+                    LightField[1][i1, i2] = (node.Emmision + node.Type.Emission);
                     //node.LightDirection.Normalize();
                 }
             }
@@ -109,7 +109,11 @@ namespace darkcave
                 {
                     Node hit = ForeGround[x, y];
 
-                    if ((hit.LType & LightType.Direct) == LightType.Direct)
+                    if (hit.Type.Emission != Vector3.Zero  )
+                    {
+                        sum += LightField[0][x, y];
+
+                    } else if ((hit.LType & LightType.Direct) == LightType.Direct)
                     {
                         sum += LightField[0][x, y] * MathHelper.Clamp(Vector3.Dot(hit.LightDirection, Utils.Rays[i2]), 0, 1);
                     }
@@ -162,6 +166,8 @@ namespace darkcave
         private int X;
         private int Y;
 
+        public Vector3 waterSource;
+
         Random rand = new Random();
 
         public void Init(Node[,] foreGround, int x, int y)
@@ -169,10 +175,15 @@ namespace darkcave
             ForeGround = foreGround;
             X = x;
             Y = y;
+            waterSource = new Vector3(50, 50, 0);
         }
 
         public void PreUpdate(BoundingBox area)
         {
+            area.Contains(waterSource);
+
+            ForeGround[(int)waterSource.X, (int)waterSource.Y].SetType(NodeFactory.Get(NodeTypes.Water));
+
         }
 
         public void Update(Node node)
@@ -228,7 +239,7 @@ namespace darkcave
                 {
                     var node = ForeGround[i1, i2];
                     node.TypeChanged += new Node.NodeEventHandler(UpdateNodeNeighboursTexture);
-                    if (ForeGround[i1, i2].Type.Type == NodeTypes.Earth || ForeGround[i1, i2].Type.Type == NodeTypes.Water)
+                    if (ForeGround[i1, i2].Type.Type == NodeTypes.Earth || ForeGround[i1, i2].Type.Type == NodeTypes.Water || ForeGround[i1, i2].Type.Type == NodeTypes.Soil)
                         UpdateNodeTexure(ForeGround[i1, i2]);
                 }
             }
@@ -246,7 +257,7 @@ namespace darkcave
             int nodeX = (int)node.Postion.X;
             int nodeY = (int)node.Postion.Y;
 
-            if (node.Type.Type == NodeTypes.Earth || node.Type.Type == NodeTypes.Water)
+            if (node.Type.Type == NodeTypes.Earth || node.Type.Type == NodeTypes.Water || node.Type.Type == NodeTypes.Soil)
                 UpdateNodeTexure(node);
 
             for (int i = 0; i < Utils.Rays.Length; i += 2)
@@ -257,7 +268,7 @@ namespace darkcave
                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                 {
                     Node neighbour = ForeGround[x, y];
-                    if (neighbour.Type.Type == NodeTypes.Earth || neighbour.Type.Type == NodeTypes.Water)
+                    if (neighbour.Type.Type == NodeTypes.Earth || neighbour.Type.Type == NodeTypes.Water || neighbour.Type.Type == NodeTypes.Soil)
                         UpdateNodeTexure(neighbour);
                 }
             }
@@ -311,7 +322,31 @@ namespace darkcave
                 else
                     texture += "1";
             }
+
             node.Type.SetTexture(texture);
+            if (node.Type.Type == NodeTypes.Soil)
+            {
+                if (texture == "0011")
+                {
+                    node.Type.ResolveCollision = NodeFactory.LeftSlope;
+                    node.Type.Decals.Clear();
+                }
+
+                else if (texture == "1001")
+                {
+                    node.Type.ResolveCollision = NodeFactory.RightSlope;
+                    node.Type.Decals.Clear();
+                }
+                else
+                {
+                    node.Type.ResolveCollision = NodeFactory.HardCollision;
+                }
+
+
+
+
+            }
+
         }
     }
 

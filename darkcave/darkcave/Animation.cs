@@ -114,7 +114,6 @@ namespace darkcave
         }
     }
 
-
     public class ActiveAnimationSet : AnimationSet
     {
         public ActiveAnimationSet()
@@ -178,6 +177,11 @@ namespace darkcave
         public void Add(AnimationSet anim )
         {
             Animations.Add(anim);
+        }
+
+        public void Remove(AnimationSet anim)
+        {
+            Animations.Remove(anim);
         }
     }
 

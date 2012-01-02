@@ -34,8 +34,7 @@ namespace darkcave
 
         
         public float Opacity;
-        public float Reflectance = 1;
-        public float ReflectionAngle;
+        public Vector3 Emission;
 
         public List<IDecal> Decals = new List<IDecal>();
 
@@ -72,7 +71,6 @@ namespace darkcave
         {
             get
             {
-                //ReflectionAngle = Animation.Active.Texture.X / 2;
                 return Animation.Active.Texture;
             }
             set
@@ -97,7 +95,8 @@ namespace darkcave
             if (OldNodeType != null && OldNodeType.CanRender)
             {
                 data.Texture = OldNodeType.Texture;
-                data.Color = OldNodeType.Color;
+                data.Color = new Color(OldNodeType.Color);
+                data.Light.W = OldNodeType.Opacity;
                 RenderGroup.AddInstance(data);
             }
         }
@@ -156,6 +155,25 @@ namespace darkcave
                         Texture = new Vector3(13, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
+                        Textures = { 
+                            {"0000", new Vector3(2, 5, 0)},
+                            {"1000", new Vector3(2, 5, 0)},
+                            {"0100", new Vector3(2, 5, 0)},
+                            {"1100", new Vector3(2, 5, 0)},
+                            {"0010", new Vector3(2, 5, 0)},
+                            {"1010", new Vector3(2, 5, 0)},
+                            {"0110", new Vector3(2, 5, 0)},
+                            {"1110", new Vector3(2, 5, 0)},
+                            {"0001", new Vector3(2, 5, 0)},
+                            {"1001", new Vector3(1, 5, 0)},
+                            {"0101", new Vector3(2, 5, 0)},
+                            {"1101", new Vector3(2, 5, 0)},
+                            {"0011", new Vector3(3, 5, 0)},
+                            {"1011", new Vector3(2, 5, 0)},
+                            {"0111", new Vector3(2, 5, 0)},
+                            {"1111", new Vector3(2, 5, 0)},
+                        }
+
                     }.AddDecals(DecalFactory.Get(DecalType.Grass));
                     break;
                 case NodeTypes.Air:
@@ -190,6 +208,7 @@ namespace darkcave
                         Texture = new Vector3(15, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
+                        Emission = new Vector3(1.0f, .2f, 0)
                     };
                     break;
 
@@ -234,15 +253,86 @@ namespace darkcave
         public static void HardCollision(Node node, Entity player, Vector3 speed)
         {
             var delta = (player.Postion + speed - node.Postion);
-            delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
-            var nV = Vector3.Dot(delta, speed);
+            var dir = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0,
+                                Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
 
-            player.Speed = speed - MathHelper.Min(nV, 0) * delta;
+            var dist = new Vector3(delta.X - dir.X * (node.Size.X + player.Size.X) / 2, delta.Y - dir.Y * (node.Size.Y + player.Size.Y) / 2, 0);
+
+            var nDir = Vector3.Dot(dir, dist);
+
+            var finalSpeed = speed - MathHelper.Min(nDir, 0) * dir;
+
+            player.Speed = finalSpeed;
+
+            if (dir.Y == 1)
+                player.Force.Y = player.Gravity;
         }
+
+        public static void RightSlope(Node node, Entity player, Vector3 speed)
+        {
+
+            BoundingBox b = new BoundingBox(player.CollisionBox.Min + speed, player.CollisionBox.Max + speed);
+            Ray r = new Ray(node.Postion - new Vector3(0.5f, 0.5f, 0), new Vector3(0.5f, 0.5f, 0));
+            float? dist = r.Intersects(b);
+
+            if (dist == null)
+                return;
+
+            if (b.Max.X > node.CollisionBox.Max.X || b.Max.Y < node.CollisionBox.Min.Y)
+            {
+                HardCollision(node, player, speed);
+                return;
+            }
+
+            Ray r2 = new Ray(new Vector3(b.Max.X, b.Min.Y, 0), new Vector3(-0.5f, 0.5f, 0));
+
+            var c1 = r.Position.Y - r.Position.X;
+            var c2 = r2.Position.X;
+
+            var dir = new Vector3(r2.Position.X, (c1 + c2), 0) - r2.Position; // (c1 + c2) / 2 - c1,
+
+            var finalSpeed = speed + dir;
+            player.Speed = finalSpeed;
+            player.Force.Y = -finalSpeed.Y + player.Gravity;
+        }
+
+
+        public static void LeftSlope(Node node, Entity player, Vector3 speed)
+        {
+            BoundingBox b = new BoundingBox(player.CollisionBox.Min + speed, player.CollisionBox.Max + speed);
+            Ray r = new Ray(node.Postion + new Vector3(0.5f, -0.5f, 0), new Vector3(-0.5f, 0.5f, 0));
+            float? dist = r.Intersects(b);
+
+            if (dist == null)
+                return;
+
+            if (b.Min.X < node.CollisionBox.Min.X || b.Max.Y < node.CollisionBox.Min.Y)
+            {
+                HardCollision(node, player, speed);
+                return;
+            }
+
+            Ray r2 = new Ray(new Vector3(b.Min.X, b.Min.Y, 0), new Vector3(0.5f, 0.5f, 0));
+
+            var c1 = r.Position.Y + r.Position.X;
+            var c2 = r2.Position.X;
+
+            var dir = new Vector3(r2.Position.X, (c1 - c2), 0) - r2.Position; // (c1 + c2) / 2 - c1,
+
+            var finalSpeed = speed + dir;
+            player.Speed = finalSpeed;
+            player.Force.Y = -finalSpeed.Y + player.Gravity;
+        }
+
 
         public static void Slowdown(Node node, Entity player, Vector3 speed)
         {
             player.Speed = speed / 2;
+        }
+
+        public static void FreeMotion(Node node, Entity player, Vector3 speed)
+        {
+            player.Force.Y = player.Gravity;
         }
 
 
@@ -312,15 +402,15 @@ namespace darkcave
 
         public void GetInstanceData(RenderGroup RenderGroup)
         {
-            
-            Instance.Color = Type.Color;
+            Instance.Color = new Color(Type.Color);
             /*if (Emmision.X > 1 && Emmision.Y > 1 && Emmision.Z > 1)
                 Instance.Light = Vector3.One; //Vector3.One * Type.Opacity;//
             else*/
-            Instance.Light = (Incident + Emmision);
+            Instance.Light = new Vector4(Incident + Emmision, Type.Opacity);
             Instance.Texture = Type.Texture;
             Type.GetInstanceData(Instance, RenderGroup);
             RenderGroup.AddInstance(Instance);
+
             foreach (IDecal decal in Type.Decals)
             {
                 decal.GetInstanceData(RenderGroup);

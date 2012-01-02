@@ -28,8 +28,13 @@ namespace darkcave
             {
                 actions[i]();
                 actions[i] = null;
+                Console.Write(count);
             }
             count = 0;
+
+            for (int i = Entities.Count - 1; i >= 0; i--)
+                if (Entities[i].Alive == false)
+                    RemoveEntity(Entities[i]);
 
             for (int i = 0; i < Entities.Count; i++)
                 Entities[i].Environment = Map.Describe(Entities[i].Postion);
@@ -39,10 +44,9 @@ namespace darkcave
                 Map.ResolveCollisions(Entities[i]);
             for (int i = 0; i < Entities.Count; i++)
                 Entities[i].Update();
-
         }
 
-        public void Damage(Entity sender, BoundingSphere area, float amount)
+        public void Damage(Entity sender, BoundingSphere area, int amount)
         {
             var receiver = getCollided(area, sender);
             if (receiver == null)
@@ -69,10 +73,37 @@ namespace darkcave
             ent.World = this;
         }
 
-        private void ApplyDamage(Entity receiver, float amount, Entity sender)
+        private void ApplyDamage(Entity receiver, int amount, Entity sender)
         {
-            receiver.Speed += Vector3.Normalize(receiver.Postion - sender.Postion);
-            receiver.Damage();
+            //receiver.Speed += Vector3.Normalize(receiver.Postion - sender.Postion);
+            receiver.Damage(amount);
         }
+
+        private void RemoveEntity(Entity ent)
+        {
+            Entities.Remove(ent);
+            ((Game1)Game).RemoveEntity(ent);
+        }
+
+        public Entity CheckEntity(Vector3 start, Vector3 direction, Entity sender)
+        {
+            Ray ray = new Ray(start, direction);
+
+            foreach (var ent in Entities)
+            {
+                if (ent == sender)
+                    continue;
+
+                if (ray.Intersects(ent.CollisionBox) != null)
+                    return ent;
+            }
+            return null;
+        }
+
+        public Node CheckNode(Vector3 start, Vector3 direction)
+        {
+            return Map.Describe(start + direction).Node;
+        }
+
     }
 }

@@ -24,7 +24,7 @@ namespace darkcave
             Y = (int)Size.Y;
         }
 
-        LightingComponent lighting = new LightingComponent();
+        public LightingComponent lighting = new LightingComponent();
 
         List<IMapComponent> components;
 
@@ -71,7 +71,11 @@ namespace darkcave
                     };
 
                     node.SetPosition(new Vector3(i1, i2, 0));
-                    node.SetType(NodeFactory.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air, true));
+
+                    if (noise >0.6f && noise < 0.7f && i2 < 20)
+                        node.SetType(NodeFactory.Get(NodeTypes.Fire));
+                    else
+                    node.SetType(NodeFactory.Get(noise < 0.7f ? NodeTypes.Earth : NodeTypes.Air, true));
 
                     ForeGround[i1, i2] = node;
                 }
@@ -83,7 +87,7 @@ namespace darkcave
                         Value = noise,
                     };
                     node.SetPosition(new Vector3(i1, i2, 0));
-                    node.SetType(NodeFactory.Get(NodeTypes.Earth));
+                    node.SetType(NodeFactory.Get(NodeTypes.Soil));
 
                     ForeGround[i1, i2] = node;
                 }
@@ -100,7 +104,6 @@ namespace darkcave
                     node.SetPosition(new Vector3(i1, i2, 0));
                     node.SetType(NodeFactory.Get(NodeTypes.Air));
 
-                    //node.Ambience = Sky;
                     ForeGround[i1, i2] = node;
                 }
             }

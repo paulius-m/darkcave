@@ -21,10 +21,10 @@
       <Processor>ModelProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\plane2.xnb</Output>
-      <Time>2011-03-12T19:35:54.0997382+02:00</Time>
+      <Time>2011-11-13T22:18:29.189493+02:00</Time>
       <Dependency>
         <Key>obj\x86\Release\plane2_0.xml</Key>
-        <Value>2011-03-22T22:57:19.9825049+02:00</Value>
+        <Value>2011-11-13T22:18:32.7326956+02:00</Value>
       </Dependency>
     </Item>
     <Item>
@@ -34,7 +34,7 @@
       <Processor>EffectProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\InstancedModel.xnb</Output>
-      <Time>2011-09-26T22:37:01.9272604+03:00</Time>
+      <Time>2011-12-29T16:05:10.3839919+02:00</Time>
     </Item>
     <Item>
       <Source>E.png</Source>
@@ -52,7 +52,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\atlas.xnb</Output>
-      <Time>2011-07-26T21:31:45.4918808+03:00</Time>
+      <Time>2011-12-29T21:58:03.5647265+02:00</Time>
     </Item>
     <Item>
       <Source>Box.FBX</Source>
@@ -66,7 +66,7 @@
       <Importer>FbxImporter</Importer>
       <Options>IntermediateFile, DontCacheImportedData</Options>
       <Output>obj\x86\Release\plane2_0.xml</Output>
-      <Time>2011-03-12T19:35:54.0997382+02:00</Time>
+      <Time>2011-11-13T22:18:29.189493+02:00</Time>
     </Item>
     <Item>
       <Source>char1.png</Source>
@@ -75,7 +75,7 @@
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
       <Output>d:\documents\visual studio 10\Projects\darkcave\darkcave\darkcave\bin\x86\Release\Content\char1.xnb</Output>
-      <Time>2011-09-18T20:37:57.7789337+03:00</Time>
+      <Time>2011-12-30T12:43:46.3184328+02:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>

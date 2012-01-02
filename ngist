@@ -1,0 +1,180 @@
+[1mdiff --git a/darkcave/darkcave/Map.cs b/darkcave/darkcave/Map.cs[m
+[1mindex 37cd838..51399dd 100644[m
+[1m--- a/darkcave/darkcave/Map.cs[m
+[1m+++ b/darkcave/darkcave/Map.cs[m
+[36m@@ -52,10 +52,9 @@[m [mnamespace darkcave[m
+                     Value = noise,[m
+                 };[m
+ [m
+[31m-                node.SetType(NodeType.Soil);[m
+[32m+[m[32m                node.SetType(NodeType.Get(NodeTypes.Soil));[m
+                 node.SetPosition(new Vector3(i1, i3, 0));[m
+[31m-                node.Color = new Vector3(0, .5f, 0.0f);[m
+[31m-                node.Texture = new Vector3(2, 0, 0);[m
+[32m+[m
+                 ForeGround[i1, i3] = node;[m
+ [m
+                 for (int i2 = 0; i2< i3 - 3; i2++)[m
+[36m@@ -67,20 +66,15 @@[m [mnamespace darkcave[m
+                         Value = noise,[m
+                     };[m
+ [m
+[31m-                    node.SetType(noise < 0.6f ? NodeType.Earth : NodeType.Air);[m
+[32m+[m[32m                    node.SetType(NodeType.Get(noise < 0.6f ? NodeTypes.Earth : NodeTypes.Air));[m
+ [m
+                     node.SetPosition(new Vector3(i1, i2, 0));[m
+[31m-                    if (node.Type == NodeType.Earth)[m
+[31m-                    {[m
+[31m-                        node.Color = new Vector3(.4f, .2f, 0.1f);[m
+[31m-                        node.Texture = new Vector3(1, 0, 0);[m
+[31m-                    }[m
+ [m
+[31m-                    if (node.Type == NodeType.Air)[m
+[31m-                    {[m
+[31m-                        node.Color = new Vector3((float)noise * 2);[m
+[31m-                        node.Texture = new Vector3(0,0,0);[m
+[31m-                    }[m
+[32m+[m[32m                    //if (node.Type == NodeTypes.Air)[m
+[32m+[m[32m                    //{[m
+[32m+[m[32m                    //    node.Color = new Vector3((float)noise * 2);[m
+[32m+[m[32m                    //    node.Texture = new Vector3(0,0,0);[m
+[32m+[m[32m                    //}[m
+ [m
+                     ForeGround[i1, i2] = node;[m
+                 }[m
+[36m@@ -92,12 +86,10 @@[m [mnamespace darkcave[m
+                         Value = noise,[m
+                     };[m
+ [m
+[31m-                    node.SetType(NodeType.Earth);[m
+[32m+[m[32m                    node.SetType( NodeType.Get(NodeTypes.Earth));[m
+ [m
+                     node.SetPosition(new Vector3(i1, i2, 0));[m
+[31m-                        node.Color = new Vector3(.4f, .2f, 0.1f);[m
+[31m-                        node.Texture = new Vector3(1, 0, 0);[m
+[31m-                        ForeGround[i1, i2] = node;[m
+[32m+[m[32m                    ForeGround[i1, i2] = node;[m
+                 }[m
+ [m
+ [m
+[36m@@ -110,10 +102,10 @@[m [mnamespace darkcave[m
+                         Value = noise,[m
+                     };[m
+ [m
+[31m-                    node.SetType(NodeType.Air);[m
+[32m+[m[32m                    node.SetType(NodeType.Get(NodeTypes.Air));[m
+ [m
+                     node.SetPosition(new Vector3(i1, i2, 0));[m
+[31m-                    node.Texture = new Vector3(2, 1, 0);[m
+[32m+[m[32m                    //node.Texture = new Vector3(2, 1, 0);[m
+                     node.Ambience = Sky;[m
+                     ForeGround[i1, i2] = node;[m
+                 }[m
+[36m@@ -137,16 +129,16 @@[m [mnamespace darkcave[m
+                 if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))[m
+                 {[m
+                     Node hit = ForeGround[x, y];[m
+[31m-                    switch(ForeGround[x, y].Type)[m
+[32m+[m[32m                    switch(ForeGround[x, y].Type.Type)[m
+                     {[m
+[31m-                        case NodeType.Soil:[m
+[31m-                        case NodeType.Earth:[m
+[32m+[m[32m                        case NodeTypes.Soil:[m
+[32m+[m[32m                        case NodeTypes.Earth:[m
+                         {[m
+[31m-                            sum2 += (hit.Diffuse * hit.Color + hit.Ambience * hit.Color*2);[m
+[32m+[m[32m                            sum2 += (hit.Diffuse * hit.Type.Color + hit.Ambience * hit.Type.Color*2);[m
+                             count2++;[m
+                             break;[m
+                         }[m
+[31m-                        case NodeType.Air:[m
+[32m+[m[32m                        case NodeTypes.Air:[m
+                         {[m
+                             sum += hit.Diffuse;[m
+                             count++;[m
+[36m@@ -162,7 +154,7 @@[m [mnamespace darkcave[m
+                 }[m
+             }[m
+ [m
+[31m-            if (node.Type == NodeType.Air || ((node.Type == NodeType.Soil || node.Type == NodeType.Earth  )))[m
+[32m+[m[32m            if (node.Type.Type == NodeTypes.Air || ((node.Type.Type == NodeTypes.Soil || node.Type.Type == NodeTypes.Earth  )))[m
+             {[m
+                 count += count2;[m
+                 sum += sum2;[m
+[36m@@ -204,7 +196,7 @@[m [mnamespace darkcave[m
+                     var node = ForeGround[i1, i2];[m
+ [m
+ [m
+[31m-                    if (node.Type != NodeType.Air)[m
+[32m+[m[32m                    if (node.Type.Type != NodeTypes.Air)[m
+                     {[m
+                         node.Ambience = Sky;[m
+                         goto next;[m
+[36m@@ -232,12 +224,12 @@[m [mnamespace darkcave[m
+                     var node = ForeGround[i1, i2];[m
+                     if (amb)[m
+                     {[m
+[31m-                        amb = node.Type == NodeType.Air;[m
+[32m+[m[32m                        amb = node.Type.Type == NodeTypes.Air;[m
+                         if (!amb)[m
+                             node.Ambience = Sky;[m
+                     }[m
+ [m
+[31m-                    if (node.LType == LightType.Ambient || node.Type != NodeType.Earth)[m
+[32m+[m[32m                    if (node.LType == LightType.Ambient || node.Type.Type != NodeTypes.Earth)[m
+                     {[m
+                         node.Diffuse = lightUp(node);[m
+                     }[m
+[36m@@ -247,25 +239,24 @@[m [mnamespace darkcave[m
+ [m
+         public Node Collides(Entity ent)[m
+         {[m
+[31m-            int minX = (int)(ent.FuturePosition.X - 1);[m
+[31m-            int maxX = (int)(ent.FuturePosition.X + 2);[m
+[31m-            int minY = (int)(ent.FuturePosition.Y - 1);[m
+[31m-            int maxY = (int)(ent.FuturePosition.Y + 2);[m
+[31m-[m
+[31m-[m
+[31m-            minX = minX < 0 ? 0 : minX;[m
+[31m-            maxX = maxX >= X ? X : maxX;[m
+[31m-[m
+[31m-            minY = minY < 0 ? 0 : minY;[m
+[31m-            maxY = maxY >= Y ?Y : maxY;[m
+[32m+[m[32m            for (int i1 = 0; i1 < ent.CollisionRays.Length; i1++ )[m
+[32m+[m[32m            {[m
+[32m+[m[32m                Ray ray = ent.CollisionRays[i1];[m
+ [m
+[31m-            for (int i1 = minX; i1< maxX; i1++)[m
+[31m-                for (int i2 = minY; i2 < maxY; i2++)[m
+[32m+[m[32m                for (int r = 0; r < ent.TravelDistance + 1; r++)[m
+                 {[m
+[31m-                    var node = ForeGround[i1, i2];[m
+[31m-                    if ( node.Type != NodeType.Air && node.CollisionBox.Intersects(ent.FutureCollisionBox))[m
+[32m+[m[32m                    float x1 = ray.Position.X + ray.Direction.X * r;[m
+[32m+[m[32m                    float y1 = ray.Position.Y + ray.Direction.Y * r;[m
+[32m+[m[32m                    var node = ForeGround[(int)x1, (int)y1];[m
+[32m+[m[32m                    if (node.Type.Type == NodeTypes.Air)[m
+[32m+[m[32m                        continue;[m
+[32m+[m
+[32m+[m[32m                    float? dist = node.CollisionBox.Intersects(ray);[m
+[32m+[m[32m                    if (dist != null & dist < 1f)[m
+                         return node;[m
+                 }[m
+[32m+[m[32m            }[m
+[32m+[m
+             return null;[m
+         }[m
+ [m
+[36m@@ -275,8 +266,11 @@[m [mnamespace darkcave[m
+                 for (int i2 = 0; i2 < Y; i2++)[m
+                 {[m
+                     var node = ForeGround[i1, i2];[m
+[32m+[m
+[32m+[m[32m                    if (node.Type.Type == NodeTypes.Air)[m
+[32m+[m[32m                        continue;[m
+                     var testres =  cam.Frustrum.Contains(node.CollisionBox);[m
+[31m-                    if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains)[m
+[32m+[m[32m                    if (testres == ContainmentType.Intersects || testres == ContainmentType.Contains )[m
+                         instancer.AddInstance(node);[m
+                 }[m
+         }[m

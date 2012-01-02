@@ -42,8 +42,8 @@ namespace darkcave
 
         public void GetInstanceData(RenderGroup RenderGroup)
         {
-            Instance.Color = Color;
-            Instance.Light = Node.Incident + Node.Emmision;
+            Instance.Color = new Color(Color);
+            Instance.Light = new Vector4(Node.Incident + Node.Emmision, 1);
             Instance.Texture = Texture;
             RenderGroup.AddInstance(Instance);
         }
