@@ -175,12 +175,12 @@ namespace darkcave
             opacity = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
             ambience = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
 
-            opacityScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 16, pp.BackBufferHeight / 16, true, SurfaceFormat.Color, DepthFormat.None);
-            ambienceScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 16, pp.BackBufferHeight / 16, true, SurfaceFormat.Color, DepthFormat.None);
+            opacityScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 4, pp.BackBufferHeight / 4, true, SurfaceFormat.Color, DepthFormat.None);
+            ambienceScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 4, pp.BackBufferHeight / 4, true, SurfaceFormat.Color, DepthFormat.None);
 
             polar = new RenderTarget2D(Device, 1024, 512, true, SurfaceFormat.Rg32, DepthFormat.None);
             zmaps = new List<RenderTarget2D>();
-            shadow = new RenderTarget2D(Device, pp.BackBufferWidth/2, pp.BackBufferHeight/2, true, SurfaceFormat.Color, DepthFormat.None); 
+            shadow = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None); 
             //new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
 
             be = new BasicEffect(Device);

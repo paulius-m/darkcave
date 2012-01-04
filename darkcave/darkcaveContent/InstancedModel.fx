@@ -42,7 +42,7 @@ sampler ambient = sampler_state
 {
     Texture = (Ambient);
 	MinFilter = Linear;
-	MagFilter = Anisotropic;
+	MagFilter = Linear;
 	MipFilter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
@@ -133,11 +133,13 @@ PixelShaderOutput ColorShader(VertexShaderOutput input)
 	PixelShaderOutput output;
 	float4 map = tex2D(diffuse, input.TextureCoordinate.xy);
 
-	output.Color = map;
-	//output.Color.a = ;
-	output.Color.xyz *= input.Color.xyz;
+	if (map.a == 0)
+	discard;
 
-	output.Ambience.xyz = input.Pos.xyz;
+	output.Color.a = map.a;
+	output.Color.xyz = map.xyz * input.Color.xyz;
+
+	output.Ambience.xyz = saturate(map.xyz * input.Pos.xyz);
 	output.Ambience.a = map.a;
 
 	output.Opacity.xyzw = float4(0,0,0,0);
@@ -280,7 +282,8 @@ float4 blur(sampler text, float2 xy)
 
 float4 FinalShader(VertexShaderOutput input) : COLOR0
 {
-	float4 skycolor = float4(0, 0.0, 0.0, 1);//float4(0.4, 0.6, 0.9, 1);
+	float4 skycolor = float4(0.4, 0.6, 0.9, 1);//float4(0.4, 0.6, 0.9, 1);
+	float4 downcolor = float4 (1,1,1,1);
 	float4 color = float4(0,0,0,1);
 	float4 map = tex2D(diffuse, input.TextureCoordinate.xy);
 	float4 amb = tex2D(ambient, input.TextureCoordinate.xy);
@@ -288,9 +291,9 @@ float4 FinalShader(VertexShaderOutput input) : COLOR0
 	float4 shad = tex2D(shadow, input.TextureCoordinate.xy);
 
 	if (map.a == 0)
-		color = amb2 * skycolor*(1 + input.TextureCoordinate.y);
+		color = skycolor*(1 - input.TextureCoordinate.y) + downcolor * (input.TextureCoordinate.y); //TODO: move new shader for sky
 	else
-		color.xyz = (amb2.xyz * shad.xyz + amb.xyz  ) * map.xyz;//(amb2.xyz * shad.xyz + (amb.x)*skycolor*(1 + input.TextureCoordinate.y) ) * map.xyz;
+		color.xyz = (amb2.xyz * shad.xyz + amb.xyz)*map.xyz;
 
 	return color;
 }

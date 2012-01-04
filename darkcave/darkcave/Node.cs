@@ -204,11 +204,11 @@ namespace darkcave
                 case NodeTypes.Fire:
                     o = new NodeType
                     {
-                        Color = new Vector3(1.0f, .2f, 0),
+                        Color = new Vector3(1.0f, 0.3f, 0.0f),
                         Texture = new Vector3(15, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
-                        Emission = new Vector3(1.0f, .2f, 0)
+                        Emission = new Vector3(1f, 0.3f, 0.0f),
                     };
                     break;
 

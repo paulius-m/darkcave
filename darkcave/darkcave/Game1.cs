@@ -21,17 +21,16 @@ namespace darkcave
         RenderGroup entitygroup;
         Camera cam;
         public Entity player;
-        Entity enemy;
-
-        List<Entity> entities;
-
         public World gameWorld;
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             Instance = this;
-
+            graphics.ToggleFullScreen();
+            graphics.PreferredBackBufferHeight = 800;
+            graphics.PreferredBackBufferWidth = 1280;
         }
 
         public static Game1 Instance
@@ -70,6 +69,7 @@ namespace darkcave
 
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
+
             map.Init();
             base.Initialize();
         }

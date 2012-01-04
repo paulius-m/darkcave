@@ -80,8 +80,8 @@ namespace darkcave
                 for (int i2 = (int) area.Min.Y; i2 < area.Max.Y; i2++)
                 {
                     var node = ForeGround[i1, i2];
-                    LightField[0][i1, i2] = (node.Incident + node.Emmision ) * node.Type.Color;
-                    LightField[1][i1, i2] = (node.Emmision + node.Type.Emission);
+                    LightField[0][i1, i2] = (node.Incident + node.Emmision);
+                    LightField[1][i1, i2] = (node.Type.Emission);
                     //node.LightDirection.Normalize();
                 }
             }
@@ -109,11 +109,11 @@ namespace darkcave
                 {
                     Node hit = ForeGround[x, y];
 
-                    if (hit.Type.Emission != Vector3.Zero  )
+                    /*if (hit.Type.Emission != Vector3.Zero  )
                     {
                         sum += LightField[0][x, y];
 
-                    } else if ((hit.LType & LightType.Direct) == LightType.Direct)
+                    } else */if ((hit.LType & LightType.Direct) == LightType.Direct)
                     {
                         sum += LightField[0][x, y] * MathHelper.Clamp(Vector3.Dot(hit.LightDirection, Utils.Rays[i2]), 0, 1);
                     }
