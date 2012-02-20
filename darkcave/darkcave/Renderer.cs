@@ -175,12 +175,12 @@ namespace darkcave
             opacity = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
             ambience = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None);
 
-            opacityScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 4, pp.BackBufferHeight / 4, true, SurfaceFormat.Color, DepthFormat.None);
-            ambienceScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 4, pp.BackBufferHeight / 4, true, SurfaceFormat.Color, DepthFormat.None);
+            opacityScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 2, pp.BackBufferHeight / 2, true, SurfaceFormat.Color, DepthFormat.None);
+            ambienceScaled = new RenderTarget2D(Device, pp.BackBufferWidth / 2, pp.BackBufferHeight / 2, true, SurfaceFormat.Color, DepthFormat.None);
 
             polar = new RenderTarget2D(Device, 1024, 512, true, SurfaceFormat.Rg32, DepthFormat.None);
             zmaps = new List<RenderTarget2D>();
-            shadow = new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None); 
+            shadow = new RenderTarget2D(Device, pp.BackBufferWidth/2, pp.BackBufferHeight/2, true, SurfaceFormat.Color, DepthFormat.None); 
             //new RenderTarget2D(Device, pp.BackBufferWidth, pp.BackBufferHeight, true, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
 
             be = new BasicEffect(Device);
@@ -195,26 +195,13 @@ namespace darkcave
         public void Draw(Camera cam)
         {
             render(model.Meshes[0].MeshParts[0], cam);
-            /*
-            var meshPart = model.Meshes[0].MeshParts[0];
-
-            Effect effect = meshPart.Effect;
-
-
-            var raster = new RasterizerState();
-            raster.FillMode = FillMode.WireFrame;
-            var old = Device.RasterizerState;
-            Device.RasterizerState = raster;
-            RenderInstances2(meshPart, effect, cam);
-
-            Device.RasterizerState = old;*/
         }
 
         private void render(ModelMeshPart meshPart, Camera cam)
         {
             // Set up the instance rendering effect.
             Effect effect = meshPart.Effect;
-
+            effect.Parameters["Offset"].SetValue(cam.Offset);
             RenderInstances(meshPart, effect, cam);
 
             Device.SetVertexBuffers(
@@ -226,26 +213,14 @@ namespace darkcave
 
             RenderShadows(meshPart, effect, cam);
 
-            ScaleDown(meshPart, effect);
             Device.SetRenderTarget(null);
             effect.Parameters["Texture"].SetValue(color);
-            effect.Parameters["Ambient"].SetValue(ambienceScaled);
-            effect.Parameters["Ambient2"].SetValue(opacityScaled);
+            effect.Parameters["Ambient"].SetValue(ambience);
+            effect.Parameters["Ambient2"].SetValue(opacity);
             effect.Parameters["Shadow"].SetValue(shadow);
             effect.CurrentTechnique = effect.Techniques["Final"];
             effect.CurrentTechnique.Passes[0].Apply();
             Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
-        /*    
-            using (System.IO.Stream f = System.IO.File.Create("D:\\opacity.png"))
-                opacity.SaveAsPng(f, opacity.Width, opacity.Height);
-
-using (System.IO.Stream f = System.IO.File.Create("D:\\color.png"))
-    color.SaveAsPng(f, color.Width, color.Height);
-using (System.IO.Stream f = System.IO.File.Create("D:\\ambient.png"))
-    ambience.SaveAsPng(f, ambience.Width, ambience.Height);
-
-using (System.IO.Stream f = System.IO.File.Create("D:\\shadow.png"))
-    shadow.SaveAsPng(f, shadow.Width, shadow.Height);*/
         }
 
         private Vector2 toScreenSpace(Vector3 r, Camera cam )
@@ -316,24 +291,10 @@ using (System.IO.Stream f = System.IO.File.Create("D:\\shadow.png"))
             }
         }
 
-
-        private void ScaleDown(ModelMeshPart meshPart, Effect effect)
-        {
-            Device.SetRenderTargets(ambienceScaled, opacityScaled);
-            effect.CurrentTechnique = effect.Techniques["Repeat"];
-            effect.Parameters["Ambient"].SetValue(ambience);
-            effect.Parameters["Ambient2"].SetValue(opacity);
-            effect.CurrentTechnique.Passes[0].Apply();
-
-            Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
-        }
-
         private void RenderShadows(ModelMeshPart meshPart, Effect effect, Camera cam)
         {
             for (int i = 0; i < lights.Count; i++)
             {
-                //Device.SetRenderTarget(polar);
-                //Device.Clear(new Color(1f, 1f, 1f, 0f));
                 Vector3 r = lights[i];
 
                 if (Vector3.Distance(r, cam.Target) > cam.ViewSize.Length())
@@ -344,12 +305,6 @@ using (System.IO.Stream f = System.IO.File.Create("D:\\shadow.png"))
                 effect.Parameters["Shadow"].SetValue(opacity);
 
                 effect.CurrentTechnique = effect.Techniques["ZMap"];
-
-                //effect.CurrentTechnique.Passes[0].Apply();
-                //Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
-
-
-                //effect.Parameters["Shadow"].SetValue(polar);
                 effect.CurrentTechnique.Passes[1].Apply();
                 Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
             }

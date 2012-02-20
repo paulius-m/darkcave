@@ -8,6 +8,7 @@
 // Camera settings.
 float4x4 View;
 float4x4 Projection;
+uniform float2 Offset : register(c0);
 
 int  TileCount;
 float2 Light;
@@ -23,7 +24,7 @@ sampler diffuse = sampler_state
     Texture = (Texture);
 	MinFilter = Point;
 	MagFilter = Point;
-	MipFilter = None;
+	MipFilter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -33,7 +34,7 @@ sampler shadow = sampler_state
     Texture = (Shadow);
 	MinFilter = Point;
 	MagFilter = Point;
-	MipFilter = Point;
+	MipFilter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
 };
@@ -51,8 +52,8 @@ sampler ambient = sampler_state
 sampler ambient2 = sampler_state
 {
     Texture = (Ambient2);
-	MinFilter = Linear;
-	MagFilter = Anisotropic;
+	MinFilter = Point;
+	MagFilter = Point;
 	MipFilter = Linear;
 	AddressU = Clamp;
 	AddressV = Clamp;
@@ -101,13 +102,22 @@ struct RepeatPixelShaderOutput
 	float4 Ambience2 : COLOR1;
 };
 
+float4 final_position(float4 screen_pos)
+{
+    float4 result = screen_pos;
+    result.xy += Offset*result.ww;
+    return result;
+}
+ 
+
+
 VertexShaderOutput VertexShaderCommon(VertexShaderInput input, float4x4 instanceTransform)
 {
     VertexShaderOutput output;
 
     float4 worldPosition = mul(input.Position, instanceTransform);
     float4 viewPosition = mul(worldPosition, View);
-    output.Position = mul(viewPosition, Projection);
+    output.Position = final_position(mul(viewPosition, Projection));
 
 
     output.Color = float4(1, 1, 1, 0);
@@ -139,7 +149,7 @@ PixelShaderOutput ColorShader(VertexShaderOutput input)
 	output.Color.a = map.a;
 	output.Color.xyz = map.xyz * input.Color.xyz;
 
-	output.Ambience.xyz = saturate(map.xyz * input.Pos.xyz);
+	output.Ambience.xyz = input.Pos.xyz;
 	output.Ambience.a = map.a;
 
 	output.Opacity.xyzw = float4(0,0,0,0);
@@ -253,14 +263,7 @@ RepeatPixelShaderOutput RepeatShader (VertexShaderOutput input)
 	RepeatPixelShaderOutput output;
 	output.Ambience = tex2D(ambient, input.TextureCoordinate.xy);
 	output.Ambience2 = tex2D(ambient2, input.TextureCoordinate.xy);
-	
-	/*
-	if (output.Ambience.x != output.Ambience.y)
-		output.Ambience.xyz = 1;
 
-	if (output.Ambience2.x != output.Ambience2.y)
-		output.Ambience2.xyz = 1;	
-		else output.Ambience2.xyz = 0;*/
 	return output;
 }
 
@@ -293,7 +296,7 @@ float4 FinalShader(VertexShaderOutput input) : COLOR0
 	if (map.a == 0)
 		color = skycolor*(1 - input.TextureCoordinate.y) + downcolor * (input.TextureCoordinate.y); //TODO: move new shader for sky
 	else
-		color.xyz = (amb2.xyz * shad.xyz + amb.xyz)*map.xyz;
+		color.xyz = (amb2.xyz * shad.xyz + amb.xyz) * map.xyz;
 
 	return color;
 }

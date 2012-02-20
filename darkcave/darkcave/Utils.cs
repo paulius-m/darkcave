@@ -8,7 +8,15 @@ namespace darkcave
 {
     static class Utils
     {
-        public static readonly Vector3[] Rays = new Vector3[] { new Vector3(0, 1, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 0), new Vector3(1, -1, 0), new Vector3(0, -1, 0), new Vector3(-1, -1, 0), new Vector3(-1, 0, 0), new Vector3(-1, 1, 0) };
+        public static readonly Vector3[] Rays = new Vector3[] {
+            new Vector3(-1, 0, 0),
+            new Vector3(-1, -1, 0),
+            new Vector3(0, -1, 0),
+            new Vector3(1, -1, 0),
+            new Vector3(1, 0, 0),
+            new Vector3(1, 1, 0),
+            new Vector3(0, 1, 0),
+            new Vector3(-1, 1, 0),};
     }
 
 

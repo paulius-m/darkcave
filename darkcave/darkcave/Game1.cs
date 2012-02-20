@@ -28,7 +28,7 @@ namespace darkcave
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             Instance = this;
-            graphics.ToggleFullScreen();
+            //graphics.ToggleFullScreen();
             graphics.PreferredBackBufferHeight = 800;
             graphics.PreferredBackBufferWidth = 1280;
         }
@@ -61,10 +61,9 @@ namespace darkcave
                 );
 
             render.Groups.Add(
-                itemgroup = new RenderGroup(2000, "char1")
+                itemgroup = new RenderGroup(2000, "char1") {TileCount = 32 }
                 );
 
-            itemgroup.TileCount = 32;
             //enemy.SetType(new NodeType { Texture = new Vector3(0, 2, 0) });
 
             GraphicsDevice.BlendState = BlendState.AlphaBlend;
@@ -83,7 +82,7 @@ namespace darkcave
         {
         }
 
-        NodeTypes newNodeType = NodeTypes.Fire;
+        NodeTypes newNodeType = NodeTypes.Custom;
         MouseState oldstate;
         protected override void Update(GameTime gameTime)
         {
@@ -100,7 +99,8 @@ namespace darkcave
                 {
                     var type = NodeFactory.Get(newNodeType);
                     //type.ResolveCollision = NodeFactory.Slope;
-                    //type.Texture = new Vector3(1f, 5f, 0);
+                    type.Texture = new Vector3(1f, 7f, 0);
+                    //type.Emission = Vector3.One;
                     node.SetType(type);
 
                 }
@@ -112,6 +112,7 @@ namespace darkcave
 
                 if (mouse.MiddleButton == ButtonState.Pressed && mouse.MiddleButton != oldstate.MiddleButton)
                 {
+                    point = new Vector3((int)point.X, (int)point.Y, 0);
                     map.SpawnLight(point);
                     render.AddLight(point);
                     var torch = EntityFactory.GetTorch();
@@ -159,5 +160,10 @@ namespace darkcave
             }
         }
 
+        public void AddEntity(Entity entity)
+        {
+            entitygroup.Instances.Add(entity);
+            gameWorld.AddEntity(entity);
+        }
     }
 }

@@ -22,14 +22,14 @@ namespace darkcave
     {
         public Vector3 Speed;
         public Vector3 Force;
-        public Vector3 Color = Vector3.One / 2;
+        public Vector3 Color = Vector3.One;
         public float Opacity = 1;
         public Vector3 Postion;
         public Vector3 Scale = Vector3.One;
         public Vector3 Size = Vector3.One;
         public BoundingBox CollisionBox;
         public float MaxSpeedX = 0.1f;
-        public float MaxSpeedY = 0.25f;
+        public float MaxSpeedY = 0.35f;
         public float Gravity = 0.02f;
 
         public bool InJump;
@@ -206,14 +206,14 @@ namespace darkcave
                             Count = 1 }
                         },
                         {"damage", new TransitionAnimation{
-                            Texture = new Vector3 (1, 2, 0),
-                            Position = new Vector3(1, 2, 0),  
+                            Texture = new Vector3 (7, 0, 0),
+                            Position = new Vector3(7, 0, 0),  
                             End = e.EndDamage,
                             Count = 2, Delay = 20}
                         },
                         {"die", new TransitionAnimation{
-                            Texture = new Vector3 (1, 2, 0),
-                            Position = new Vector3(1, 2, 0),  
+                            Texture = new Vector3 (7, 0, 0),
+                            Position = new Vector3(7, 0, 0),  
                             End = e.EndDie,
                             Count = 2, Delay = 20}
                         },
@@ -227,12 +227,12 @@ namespace darkcave
             var e = new Entity
             {
                 MaxSpeedX = 0.02f,
-                Gravity = 0,
-                Control = new AIController(),
+                Control = new DumpAIController(),
                 Weapon = new BasicWeapon {
                         CollisionSphere = new BoundingSphere { Center = Vector3.Zero, Radius = .5f },
                         Damage = 1
-                    }
+                    },
+                Health = 10,
             };
             e.Frames = new AnimationSet
             {
@@ -263,6 +263,52 @@ namespace darkcave
             };
             return e;
         }
+
+        public static Entity GetSkeleton()
+        {
+            var e = new Entity
+            {
+                MaxSpeedX = 0.01f,
+                Control = new DumpAIController(),
+                Weapon = new BasicWeapon
+                {
+                    CollisionSphere = new BoundingSphere { Center = Vector3.Zero, Radius = .5f },
+                    Damage = 1
+                },
+                Health = 1
+            };
+            e.Frames = new AnimationSet
+            {
+                Frames = {
+                    { "run", new Animation{ 
+                        Texture = new Vector3(2, 2, 0),
+                        Position = new Vector3(2, 2, 0),
+                        Count = 6, Delay = 15}
+                    },
+                    { "idle", new Animation{
+                        Texture = new Vector3 (0, 2, 0),
+                        Position = new Vector3(0, 2, 0),
+                        Count = 1 }
+                    },
+                    {"damage", new TransitionAnimation{
+                        Texture = new Vector3 (0, 2, 0),
+                        Position = new Vector3(0, 2, 0),  
+                        End = e.EndDamage,
+                        Count = 1, Delay = 20}
+                    },
+                    {"die", new TransitionAnimation{
+                        Texture = new Vector3 (0, 2, 0),
+                        Position = new Vector3(0, 2, 0),  
+                        End = e.EndDie,
+                        Count = 1, Delay = 20}
+                    },
+                }
+            };
+            return e;
+        
+        
+        }
+
 
         public static Entity GetTorch()
         {
@@ -321,14 +367,21 @@ namespace darkcave
             }
         }
 
-        public class AIController : Entity.IController
+        public class DumpAIController : Entity.IController
         {
-            Random r = new Random();
+            static int id = 1;
+            Random r = new Random(id);
             int state = 0;
             bool goleft;
-
+            int count = 0;
             Vector3 dir = new Vector3(1,0,0);
             Vector3 check = new Vector3(0.5f, -1, 0);
+
+            public DumpAIController()
+            {
+                id+=15;
+            }
+
 
             Vector3[] dirs = new[] { 
                 Vector3.Right,
@@ -346,10 +399,25 @@ namespace darkcave
 
             public void Move(Entity ent)
             {
+                count++;
+                if (count >= 30)
+                {
+                    goleft = r.NextDouble() > 0.5f;
+                    count = 0;
+                }
 
-                ent.Speed = ent.MaxSpeedX * (dir);
-                ent.XDirection = 1;
-                ent.RotationX = 0;// MathHelper.Pi;
+                if (goleft)
+                {
+                    ent.Speed.X -= ent.MaxSpeedX;
+                    ent.RotationX = MathHelper.Pi;
+                    ent.XDirection = -1;
+                }
+                else
+                {
+                    ent.Speed.X += ent.MaxSpeedX;
+                    ent.XDirection = 1;
+                    ent.RotationX = 0;
+                }
             }
         }
 

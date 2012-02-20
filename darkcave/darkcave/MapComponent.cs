@@ -26,7 +26,6 @@ namespace darkcave
         private int Y;
 
         protected Vector3[][,] LightField;
-        protected Vector3[,] LightDiffusion;
 
         public void Init(Node[,] foreGround, int x, int y)
         {
@@ -36,7 +35,7 @@ namespace darkcave
             LightField = new Vector3[2][,];
             LightField[0] = new Vector3[X, Y];
             LightField[1] = new Vector3[X, Y];
-            LightDiffusion = new Vector3[X, Y];
+
             Relief = new int[x];
 
             sun = new PointLight { Position = new Vector3(50, 90, 0), ForeGround = foreGround, X = x, Y = y};
@@ -48,7 +47,7 @@ namespace darkcave
                 for (int i2 = Y - 1; i2 >= 0; i2--)
                 {
                     var node = ForeGround[i1, i2];
-                    node.TypeChanged += new Node.NodeEventHandler(UpdateRelief);
+                    node.TypeChanged += UpdateRelief;
                     if (!set && node.Type.Opacity > 0)
                     {
                         Relief[i1] = i2;
@@ -60,6 +59,7 @@ namespace darkcave
 
         public void PreUpdate(BoundingBox area)
         {
+            
             sun.Clear();
             sky.Clear();
             foreach (var light in lights)
@@ -80,8 +80,8 @@ namespace darkcave
                 for (int i2 = (int) area.Min.Y; i2 < area.Max.Y; i2++)
                 {
                     var node = ForeGround[i1, i2];
-                    LightField[0][i1, i2] = (node.Incident + node.Emmision);
-                    LightField[1][i1, i2] = (node.Type.Emission);
+                    LightField[0][i1, i2] = (node.Incident + node.Emmision) + node.Type.Emission;
+                    LightField[1][i1, i2] = (node.Emmision) * node.Type.Color;
                     //node.LightDirection.Normalize();
                 }
             }
@@ -109,13 +109,9 @@ namespace darkcave
                 {
                     Node hit = ForeGround[x, y];
 
-                    /*if (hit.Type.Emission != Vector3.Zero  )
+                    if ((hit.LType & LightType.Direct) == LightType.Direct)
                     {
-                        sum += LightField[0][x, y];
-
-                    } else */if ((hit.LType & LightType.Direct) == LightType.Direct)
-                    {
-                        sum += LightField[0][x, y] * MathHelper.Clamp(Vector3.Dot(hit.LightDirection, Utils.Rays[i2]), 0, 1);
+                        sum += LightField[0][x, y] * hit.LightDirection[i2];
                     }
                     else if (hit.Type.Opacity != 1 || node.Type.Opacity != 1)
                     {
@@ -163,6 +159,8 @@ namespace darkcave
     public class WaterSimulator : IMapComponent
     {
         protected Node[,] ForeGround;
+        protected Vector3[,] V;
+        protected int[,] D;
         private int X;
         private int Y;
 
@@ -176,6 +174,10 @@ namespace darkcave
             X = x;
             Y = y;
             waterSource = new Vector3(50, 50, 0);
+
+            V = new Vector3[X, Y];
+
+            D = new int[X, Y];
         }
 
         public void PreUpdate(BoundingBox area)
@@ -197,17 +199,24 @@ namespace darkcave
             }
         }
 
-
-        int[,] waterX = new[,] { { 0, -1, 1, -1, 1 }, { 0, 1, -1, 1, -1 } };
-        int[] waterY = new[] { -1, -1, -1, 0, 0 };
+        Vector2[] dirs = new[] { new Vector2(0, -1), new Vector2(1, 0), new Vector2(-1, 0) };
 
         private void UpdateWater(Node node)
         {
-            int r = rand.Next(3) % 2;
-            for (int i = 0; i < 5; i++)
+            Node downNode = null;
+            var x = (int)node.Postion.X;
+            var y = (int)node.Postion.Y;
+
+
+            if (V[x,y].Z == 0)
             {
-                var downNode = ForeGround[(int)MathHelper.Clamp(node.Postion.X + waterX[r, i], 0, X - 1), (int)MathHelper.Clamp(node.Postion.Y + waterY[i], 0, Y - 1)];
-                if (downNode.Type.Type != NodeTypes.Water && !downNode.Type.CanCollide)
+            
+            }
+            for (int i = 0; i < dirs.Length; i++)
+            {
+
+                downNode = ForeGround[x, y];
+                if ((i == 0 && !downNode.Type.CanCollide) || downNode.Type.Type != NodeTypes.Water)
                 {
                     var temp = node.Type;
 
@@ -219,7 +228,6 @@ namespace darkcave
                 }
             }
         }
-
     }
 
     public class TextureModifier : IMapComponent
@@ -414,5 +422,114 @@ namespace darkcave
         }
     }
 
+    class StructureGen : IMapComponent
+    {
+        protected Node[,] ForeGround;
+        private int X;
+        private int Y;
 
+        Random r = new Random(6);
+
+
+        public void Init(Node[,] foreGround, int X, int Y)
+        {
+            ForeGround = foreGround;
+            this.X = X;
+            this.Y = Y;
+
+            int[] kd = new int[15];
+            Vector3 min = new Vector3(20, 0, 0);
+            Vector3 max = new Vector3(70, 50, 0);
+
+            addPoint(min, max, 0);
+        }
+
+        void addPoint(Vector3 min, Vector3 max, int level)
+        {
+            if (min.X == max.X || min.Y == max.Y) return;
+
+            if (level > 4 && r.NextDouble() > 0.5f)
+            {
+                drawSquare(min, max);
+
+                var worm = EntityFactory.GetSkeleton();
+                worm.SetPosition( new Vector3( (min.X + max.X) / 2 , min.Y + 1 , 0));
+
+                Game1.Instance.AddEntity(worm);
+
+                return;
+            }
+            int point;
+
+            if (level % 2 == 1)
+            {
+                point = r.Next((int)min.X, (int)max.X);
+
+
+                addPoint(min, new Vector3(point, max.Y, 0), level + 1);
+                addPoint(new Vector3(point, min.Y, 0), max, level + 1);
+            }
+            else
+            {
+                point = r.Next((int)min.Y, (int)max.Y);
+
+                addPoint(min, new Vector3(max.X, point, 0), level + 1);
+                addPoint(new Vector3(min.X, point, 0), max,  level + 1);
+            }
+        }
+
+        private void drawSquare(Vector3 min, Vector3 max)
+        {
+            for (int i1 = (int)min.X; i1 < max.X; i1++)
+                for (int i2 = (int)min.Y; i2 < max.Y; i2++)
+                {
+                    var type = NodeFactory.Get(NodeTypes.Custom, true);
+                    type.CanCollide = false;
+                    type.Texture = new Vector3(2f, 7f, 0);
+                    type.Color = new Vector3(0.6f, 0.6f, 0.5f);
+                    type.Opacity = 0;
+                    ForeGround[i1, i2].SetType(type);
+                }
+            
+            
+            
+            for (int i1 = (int)min.X; i1 <= max.X; i1++)
+            {
+
+                var type = NodeFactory.Get(NodeTypes.Custom);
+                type.Texture = new Vector3(1f, 7f, 0);
+
+                ForeGround[i1, (int)max.Y].SetType(type);
+                type = NodeFactory.Get(NodeTypes.Custom);
+                type.Texture = new Vector3(1f, 7f, 0);
+
+                ForeGround[i1, (int)min.Y].SetType(type);
+            }
+
+            for (int i1 = (int)min.Y; i1 < max.Y; i1++)
+            {
+
+                var type = NodeFactory.Get(NodeTypes.Custom);
+                type.Texture = new Vector3(1f, 7f, 0);
+
+                ForeGround[(int)min.X, i1].SetType(type);
+
+                type = NodeFactory.Get(NodeTypes.Custom);
+                type.Texture = new Vector3(1f, 7f, 0);
+
+                ForeGround[(int)max.X, i1].SetType(type);
+            }
+        }
+
+
+        public void PreUpdate(BoundingBox area)
+        {
+            return;
+        }
+
+        public void Update(Node node)
+        {
+
+        }
+    }
 }

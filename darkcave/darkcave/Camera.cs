@@ -14,7 +14,7 @@ namespace darkcave
         public Matrix View;
         public Vector2 ViewSize;
         public Viewport ViewPort;
-
+        public Vector2 Offset;
         private Vector3 position;
         public Vector3 Position
         {
@@ -48,6 +48,10 @@ namespace darkcave
 
             position = new Vector3(50, 50,40);
             target = new Vector3(30, 30, 0);
+
+            Offset = new Vector2(-0.5f / ViewPort.Width, 0.5f / ViewPort.Height);
+
+
             updateView();
         }
 

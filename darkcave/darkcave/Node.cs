@@ -254,15 +254,17 @@ namespace darkcave
         {
             var delta = (player.Postion + speed - node.Postion);
             var dir = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0,
-                                Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
+                                  Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y),
+                                  0);
 
             var dist = new Vector3(delta.X - dir.X * (node.Size.X + player.Size.X) / 2, delta.Y - dir.Y * (node.Size.Y + player.Size.Y) / 2, 0);
 
             var nDir = Vector3.Dot(dir, dist);
 
-            var finalSpeed = speed - MathHelper.Min(nDir, 0) * dir;
+            var finalSpeed = speed - nDir * dir;
 
             player.Speed = finalSpeed;
+
 
             if (dir.Y == 1)
                 player.Force.Y = player.Gravity;
@@ -361,7 +363,7 @@ namespace darkcave
         public Vector3 Exitent;
         public Vector3 Emmision;
 
-        public Vector3 LightDirection;
+        public float[] LightDirection = new float[8];
         public LightType LType;
 
         protected InstanceData Instance;
@@ -379,7 +381,7 @@ namespace darkcave
 
         public void SetType(NodeType newType)
         {
-            if (Type!= null && Type.Type == newType.Type)
+            if (Type!= null && Type.Type == newType.Type&& newType.Type != NodeTypes.Custom)
                 return;
 
             newType.OldNodeType = Type;

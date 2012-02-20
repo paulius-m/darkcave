@@ -102,7 +102,7 @@ namespace darkcave
                         Value = noise,
                     };
                     node.SetPosition(new Vector3(i1, i2, 0));
-                    node.SetType(NodeFactory.Get(NodeTypes.Air));
+                    node.SetType(NodeFactory.Get(NodeTypes.Air, false));
 
                     ForeGround[i1, i2] = node;
                 }
@@ -110,6 +110,7 @@ namespace darkcave
             components = new List<IMapComponent> {lighting, /*new Clouds(),*/ new WaterSimulator(), new TextureModifier() };
             foreach (var component in components)
                 component.Init(ForeGround, X, Y);
+            new StructureGen().Init(ForeGround, X, Y);
         }
 
         private void PreUpdate(BoundingBox area)
