@@ -309,13 +309,12 @@ namespace darkcave
         
         }
 
-
         public static Entity GetTorch()
         {
             var e = new Entity
             {
                 Scale = new Vector3(0.5f, 0.5f, 0),
-                Control = new NullController(),
+                Control = new DumpAIController(),
                 Gravity = 0,
                 Opacity = 0,
             };
@@ -323,6 +322,11 @@ namespace darkcave
             {
                 Frames = {
                     { "idle", new Animation{
+                        Texture = new Vector3 (0, 15, 0),
+                        Position = new Vector3(0, 15, 0),
+                        Count = 3 }
+                    },
+                    { "run", new Animation{
                         Texture = new Vector3 (0, 15, 0),
                         Position = new Vector3(0, 15, 0),
                         Count = 3 }
@@ -359,7 +363,7 @@ namespace darkcave
                             ent.XDirection = 1;
                             break;
                         case Keys.Space:
-                            if (ent.Speed.Y == 0)
+                            if (ent.Speed.Y == 0 || ent.Environment.Node.Type.Type == NodeTypes.Water)
                                 ent.Speed.Y = ent.MaxSpeedY;
                             break;
                     }
@@ -425,6 +429,7 @@ namespace darkcave
         {
             public void Move(Entity ent)
             {
+                
             }
         }
     }

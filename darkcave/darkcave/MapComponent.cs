@@ -15,10 +15,10 @@ namespace darkcave
 
     public class LightingComponent : IMapComponent
     {
-        public PointLight sun;
+        public DirectionalLight sun;
         public SkyLight sky;
 
-        public List<ILight> lights = new List<ILight>();
+        public List<PointLight> lights = new List<PointLight>();
         public int[] Relief;
 
         protected Node[,] ForeGround;
@@ -38,7 +38,7 @@ namespace darkcave
 
             Relief = new int[x];
 
-            sun = new PointLight { Position = new Vector3(50, 90, 0), ForeGround = foreGround, X = x, Y = y};
+            sun = new DirectionalLight { Direction = new Vector3(-0.5f, -0.5f, 0), ForeGround = foreGround, X = x, Y = y, Relief = Relief };
             sky = new SkyLight { Color = new Vector3(.4f, .5f, 1f), ForeGround = foreGround, X = x, Y = y, Relief = Relief};
 
             for (int i1 = 0; i1 < X; i1++)
@@ -72,7 +72,8 @@ namespace darkcave
 
             foreach (var light in lights)
             {
-                light.Update(area);
+                if (area.Contains(light.Source.Postion) == ContainmentType.Contains)
+                    light.Update(area);
             }
 
             for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
@@ -80,9 +81,11 @@ namespace darkcave
                 for (int i2 = (int) area.Min.Y; i2 < area.Max.Y; i2++)
                 {
                     var node = ForeGround[i1, i2];
-                    LightField[0][i1, i2] = (node.Incident + node.Emmision) + node.Type.Emission;
+                    if (node.Type.Opacity != 0)
+                        LightField[0][i1, i2] = (node.Incident + node.Emmision) * node.Type.Color + node.Type.Emission;
+                    else
+                        LightField[0][i1, i2] = (node.Incident + node.Emmision) + node.Type.Emission;
                     LightField[1][i1, i2] = (node.Emmision) * node.Type.Color;
-                    //node.LightDirection.Normalize();
                 }
             }
         }
@@ -190,7 +193,7 @@ namespace darkcave
 
         public void Update(Node node)
         {
-            if (node.Type.Type == NodeTypes.Water)
+            if (node.Type.Type == NodeTypes.Water || node.Type.Type == NodeTypes.Lava)
             {
                 if (node.Updated > 0)
                     node.Updated--;
@@ -214,17 +217,21 @@ namespace darkcave
             }
             for (int i = 0; i < dirs.Length; i++)
             {
-
-                downNode = ForeGround[x, y];
-                if ((i == 0 && !downNode.Type.CanCollide) || downNode.Type.Type != NodeTypes.Water)
+                if (MyMath.IsBetween(x + (int)dirs[i].X, 0, X) && MyMath.IsBetween(y + (int)dirs[i].Y, 0, Y))
                 {
-                    var temp = node.Type;
 
-                    node.SetType(temp.OldNodeType);
-                    downNode.SetType(temp);
 
-                    downNode.Updated = 10;
-                    return;
+                    downNode = ForeGround[x + (int)dirs[i].X, y + (int)dirs[i].Y];
+                    if ((i == 0 && !downNode.Type.CanCollide) && downNode.Type.Type != node.Type.Type)
+                    {
+                        var temp = node.Type;
+
+                        node.SetType(temp.OldNodeType);
+                        downNode.SetType(temp);
+
+                        downNode.Updated = 10;
+                        return;
+                    }
                 }
             }
         }
@@ -483,41 +490,18 @@ namespace darkcave
             for (int i1 = (int)min.X; i1 < max.X; i1++)
                 for (int i2 = (int)min.Y; i2 < max.Y; i2++)
                 {
-                    var type = NodeFactory.Get(NodeTypes.Custom, true);
-                    type.CanCollide = false;
-                    type.Texture = new Vector3(2f, 7f, 0);
-                    type.Color = new Vector3(0.6f, 0.6f, 0.5f);
-                    type.Opacity = 0;
-                    ForeGround[i1, i2].SetType(type);
+                    ForeGround[i1, i2].SetType(NodeFactory.Get(NodeTypes.BrickBack));
                 }
-            
-            
-            
             for (int i1 = (int)min.X; i1 <= max.X; i1++)
             {
-
-                var type = NodeFactory.Get(NodeTypes.Custom);
-                type.Texture = new Vector3(1f, 7f, 0);
-
-                ForeGround[i1, (int)max.Y].SetType(type);
-                type = NodeFactory.Get(NodeTypes.Custom);
-                type.Texture = new Vector3(1f, 7f, 0);
-
-                ForeGround[i1, (int)min.Y].SetType(type);
+                ForeGround[i1, (int)max.Y].SetType(NodeFactory.Get(NodeTypes.Brick));
+                ForeGround[i1, (int)min.Y].SetType(NodeFactory.Get(NodeTypes.Brick));
             }
 
             for (int i1 = (int)min.Y; i1 < max.Y; i1++)
             {
-
-                var type = NodeFactory.Get(NodeTypes.Custom);
-                type.Texture = new Vector3(1f, 7f, 0);
-
-                ForeGround[(int)min.X, i1].SetType(type);
-
-                type = NodeFactory.Get(NodeTypes.Custom);
-                type.Texture = new Vector3(1f, 7f, 0);
-
-                ForeGround[(int)max.X, i1].SetType(type);
+                ForeGround[(int)min.X, i1].SetType(NodeFactory.Get(NodeTypes.Brick));
+                ForeGround[(int)max.X, i1].SetType(NodeFactory.Get(NodeTypes.Brick));
             }
         }
 

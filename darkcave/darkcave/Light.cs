@@ -24,14 +24,14 @@ namespace darkcave
     
     public class PointLight : ILight
     {
-        private Vector3 position;
-        public Vector3 Position
+        private Entity source;
+        public Entity Source
         {
-            get { return position; }
-            set { 
-                if (value != position)
-
-                position = value;}
+            get { return source; }
+            set {
+                if (value != source)
+                    source = value;
+            }
         }
 
         public Node[,] ForeGround;
@@ -39,7 +39,6 @@ namespace darkcave
         public int Y;
 
         public List<Node> DirectlyLight = new List<Node>();
-        private float[] distances = new float[722];
         private double[] Cos;
         private double[] Sin;
 
@@ -52,7 +51,6 @@ namespace darkcave
             {
                 Cos[a] = Math.Cos(a * Math.PI / 180);
                 Sin[a] = Math.Sin(a * Math.PI / 180);
-                distances[a] = int.MaxValue;
             }
         }
 
@@ -92,14 +90,14 @@ namespace darkcave
             return;*/
             for (int a = 0; a < 360; a++)
             {
-                float intensity = 1f;
+                float intensity = 0.5f;
 
-                float r = distances[a] == int.MaxValue ? 1 : distances[a];
+                float r = 1;
 
-                for (; r < 20 && intensity > 0; r++)
+                for (; r < 10 && intensity > 0; r++)
                 {
-                    int x = (int)((r * Cos[a]) + Position.X);
-                    int y = (int)((r * Sin[a]) + Position.Y);
+                    int x = (int)((r * Cos[a]) + source.Postion.X);
+                    int y = (int)((r * Sin[a]) + source.Postion.Y);
 
                     if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
                     {
@@ -109,12 +107,16 @@ namespace darkcave
                         {
                             node.LType |= LightType.Direct;
 
-                            var dir = Vector3.Normalize(node.Postion - position);
+                            var dir = Vector3.Normalize(node.Postion - source.Postion);
                             float angle = (float)(Math.Atan2(dir.Y, dir.X) + MathHelper.Pi) / MathHelper.TwoPi * 8;
-
+                            
+                            node.LightDirection[(int)(angle + 7) % 8] = 0.5f;
                             node.LightDirection[(int)angle % 8] = 1;
+                            node.LightDirection[(int)(angle + 1) % 8] = 0.5f;
+
+
                             if (node.Emmision.X < 2 && node.Emmision.Y < 2 && node.Emmision.Z < 2)
-                                node.Emmision += new Vector3(intensity);
+                                node.Emmision += new Vector3(intensity) * (node.Type.Opacity);
 
                             DirectlyLight.Add(node);
                             intensity -= node.Type.Opacity;
@@ -126,7 +128,7 @@ namespace darkcave
 
         private Tuple<int, float> ToRadial(Vector3 position)
         {
-            Vector3 diff = position - Position;
+            Vector3 diff = position - source.Postion;
             float dist = diff.Length();
             float a = MathHelper.ToDegrees((float)(Math.Atan2(diff.X, diff.Y) + Math.PI));
             //System.IO.File.AppendAllText("D:\\1.txt", ((int)a).ToString() + " " + ((int)(a*2)).ToString() + "\n");
@@ -155,25 +157,8 @@ namespace darkcave
             DirectlyLight.Clear();
         }
 
-        private void ClearDistances()
-        {
-            for (int a = 0; a < 360; a++)
-            {
-                distances[a] = int.MaxValue;
-            }
-        }
-
-
         public void Update(Node node)
         {
-            if (node.Type.Opacity == 0)
-            {
-                return;
-            }
-
-            var radial = ToRadial(node.Postion);
-            if (distances[radial.Item1] < radial.Item2)
-                distances[radial.Item1] = radial.Item2;
         }
     }
 
@@ -200,10 +185,11 @@ namespace darkcave
                     {
                         DirectlyLight.Add(node);
                         node.LType |= LightType.Direct;
-                        node.LightDirection[1] = 0.5f;
+                        node.LightDirection[0] = 0.5f;
+                        node.LightDirection[1] = 0.75f;
                         node.LightDirection[2] = 1.0f;
-                        node.LightDirection[3] = 0.5f;
-
+                        node.LightDirection[3] = 0.75f;
+                        node.LightDirection[4] = 0.5f;
                         if (node.Emmision.X < 2 && node.Emmision.Y < 2 && node.Emmision.Z < 2)
                             node.Emmision += Color * (ambIntencity);
                         ambIntencity -= node.Type.Opacity;
@@ -229,4 +215,65 @@ namespace darkcave
         {
         }
     }
+
+    public class DirectionalLight : ILight
+    {
+        public Vector3 Color;
+        public Node[,] ForeGround;
+        public int[] Relief;
+        public int X;
+        public int Y;
+        public List<Node> DirectlyLight = new List<Node>();
+        public Vector3 Direction;
+        
+        public void Update(BoundingBox area)
+        {
+            for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
+            {
+                float intensity = 2f;
+
+                float r = 1;
+
+                for (; r < 50 && intensity > 0; r++)
+                {
+                    int x = (int)((r * Direction.X) + i1);
+                    int y = (int)((r * Direction.Y) + Relief[i1] + 20);
+
+                    if (MyMath.IsBetween(x, 0, X) && MyMath.IsBetween(y, 0, Y))
+                    {
+                        var node = ForeGround[x, y];
+
+                        if (node.Type.Opacity != 0)
+                        {
+                            node.LType |= LightType.Direct;
+
+                            float angle = (float)(Math.Atan2(Direction.Y, Direction.X) + MathHelper.Pi) / MathHelper.TwoPi * 8;
+
+                            node.LightDirection[(int)(angle + 7) % 8] = 0.5f;
+                            node.LightDirection[(int)angle % 8] = 1;
+                            node.LightDirection[(int)(angle + 1) % 8] = 0.5f;
+
+
+                            if (node.Emmision.X < 2 && node.Emmision.Y < 2 && node.Emmision.Z < 2)
+                                node.Emmision += new Vector3(intensity) * (node.Type.Opacity);
+
+                            DirectlyLight.Add(node);
+                            intensity -= node.Type.Opacity;
+                        }
+                    }
+                }
+            }
+        }
+
+        public void Clear()
+        {
+        }
+
+        public void Update(Node node)
+        {
+        }
+    }
+
+
+
 }

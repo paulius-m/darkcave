@@ -12,9 +12,12 @@ namespace darkcave
         Air,
         Soil,
         Earth,
+        EarthBack,
         Water,
-        Fire,
-        Cloud
+        Lava,
+        Cloud,
+        Brick,
+        BrickBack
     }
 
     public class NodeType
@@ -54,8 +57,15 @@ namespace darkcave
                 dec.Init(node);
         }
 
-        public virtual void GetInstanceData(InstanceData data, RenderGroup RenderGroup)
+        public void GetInstanceData(InstanceData data, RenderGroup RenderGroup)
         {
+            if (this.Opacity != 0 && OldNodeType != null && OldNodeType.CanRender)
+            {
+                data.Texture = OldNodeType.Texture;
+                data.Color = new Color(OldNodeType.Color);
+                data.Light.W = OldNodeType.Opacity;
+                RenderGroup.AddInstance(data);
+            }
         }
 
         public Dictionary<string, Vector3> Textures = new Dictionary<string,Vector3>();
@@ -89,18 +99,6 @@ namespace darkcave
                 Animation.SetActive("0");
             else Animation.SetActive("0000");
         }
-
-        public override void GetInstanceData(InstanceData data, RenderGroup RenderGroup)
-        {
-            if (OldNodeType != null && OldNodeType.CanRender)
-            {
-                data.Texture = OldNodeType.Texture;
-                data.Color = new Color(OldNodeType.Color);
-                data.Light.W = OldNodeType.Opacity;
-                RenderGroup.AddInstance(data);
-            }
-        }
-
     }
 
     public static class NodeFactory
@@ -114,6 +112,13 @@ namespace darkcave
                                     { "1111", new Animation {Position = new Vector3 (1, 4, 0), Texture = new Vector3(1, 4, 0), Count = 1 } }
                                 },
                         };
+
+        private static AnimationSet lavaAnims = new ActiveAnimationSet
+        {
+            Frames = { 
+                        { "0", new Animation { Position = new Vector3(1, 9, 0), Texture = new Vector3(1, 9, 0), Count = 8, Delay = 10} },
+                                },
+        };
         
         public static NodeType Get(NodeTypes type)
         {
@@ -124,7 +129,7 @@ namespace darkcave
                 case NodeTypes.Earth:
                     o = new NodeType
                     {
-                        Color = new Vector3(.6f, .4f, 0.3f),
+                        Color = new Vector3(.6f, .5f, 0.4f),
                         Texture = new Vector3(0, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
@@ -151,7 +156,7 @@ namespace darkcave
                 case NodeTypes.Soil:
                     o = new NodeType
                     {
-                        Color = new Vector3(.4f, .3f, 0.3f),
+                        Color = new Vector3(.6f, .55f, 0.55f),
                         Texture = new Vector3(13, 0, 0),
                         ResolveCollision = HardCollision,
                         Opacity = 1.0f,
@@ -159,7 +164,7 @@ namespace darkcave
                             {"0000", new Vector3(2, 5, 0)},
                             {"1000", new Vector3(2, 5, 0)},
                             {"0100", new Vector3(2, 5, 0)},
-                            {"1100", new Vector3(2, 5, 0)},
+                            {"1100", new Vector3(1, 6, 0)},
                             {"0010", new Vector3(2, 5, 0)},
                             {"1010", new Vector3(2, 5, 0)},
                             {"0110", new Vector3(2, 5, 0)},
@@ -183,8 +188,19 @@ namespace darkcave
                         Texture = new Vector3(14, 0, 0),
                         CanCollide = false,
                         CanRender = false,
+                        Emission = new Vector3(.1f, .125f, 0.25f),
                     };
                     break;
+                case NodeTypes.EarthBack:
+                    o = new NodeType
+                    {
+                        Color = Vector3.One,
+                        Texture = new Vector3(14, 0, 0),
+                        CanCollide = false,
+                        CanRender = true,
+                    };
+                    break;
+
                 case NodeTypes.Water:
                     o = new AnimatedNode
                     {
@@ -193,7 +209,7 @@ namespace darkcave
                             Frames = waterAnims.Frames,
                             ActiveAnimation = "0"
                         },
-                        CanCollide = false,
+                        CanCollide = true,
                         CanRender = true,
                         //ReflectionAngle = 0.1f,
                         Color = new Vector3(0.5f, 0.5f, 1),
@@ -201,13 +217,18 @@ namespace darkcave
                         ResolveCollision = Slowdown,
                     };
                     break;
-                case NodeTypes.Fire:
-                    o = new NodeType
+                case NodeTypes.Lava:
+                    o = new AnimatedNode
                     {
+                        Animation = new PassiveAnimationSet
+                        {
+                            Frames = lavaAnims.Frames,
+                            ActiveAnimation = "0"
+                        },
+                        
                         Color = new Vector3(1.0f, 0.3f, 0.0f),
-                        Texture = new Vector3(15, 0, 0),
                         ResolveCollision = HardCollision,
-                        Opacity = 1.0f,
+                        Opacity = 0.9f,
                         Emission = new Vector3(1f, 0.3f, 0.0f),
                     };
                     break;
@@ -221,7 +242,23 @@ namespace darkcave
                         CanCollide = false,
                     };
                     break;
-
+                case NodeTypes.Brick:
+                    o = new NodeType
+                    {
+                        Color = new Vector3(0.9f, 0.9f, 0.9f),
+                        Texture = new Vector3(1f, 7f, 0),
+                        ResolveCollision = HardCollision,
+                        Opacity = 1.0f,
+                    };
+                    break;
+                case NodeTypes.BrickBack:
+                    o = new NodeType
+                    {
+                        CanCollide = false,
+                        Texture = new Vector3(2f, 7f, 0),
+                        Color = new Vector3(0.6f, 0.6f, 0.5f),
+                    };
+                    break;
                 default:
                     o = new NodeType();
                                         
@@ -252,9 +289,11 @@ namespace darkcave
 
         public static void HardCollision(Node node, Entity player, Vector3 speed)
         {
+            
+            /*
             var delta = (player.Postion + speed - node.Postion);
-            var dir = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0,
-                                  Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y),
+            var dir = new Vector3(Math.Abs(delta.X)> Math.Abs(delta.Y) * player.Size.Y ? Math.Sign(delta.X) : 0,
+                                  Math.Abs(delta.X)> Math.Abs(delta.Y) * player.Size.Y ? 0 : Math.Sign(delta.Y),
                                   0);
 
             var dist = new Vector3(delta.X - dir.X * (node.Size.X + player.Size.X) / 2, delta.Y - dir.Y * (node.Size.Y + player.Size.Y) / 2, 0);
@@ -267,7 +306,19 @@ namespace darkcave
 
 
             if (dir.Y == 1)
-                player.Force.Y = player.Gravity;
+                player.Force.Y = player.Gravity;*/
+
+            var delta = (player.Postion + speed - node.Postion);
+            delta = new Vector3(Math.Abs(delta.X) > Math.Abs(delta.Y) ? Math.Sign(delta.X) : 0, Math.Abs(delta.X) > Math.Abs(delta.Y) ? 0 : Math.Sign(delta.Y), 0);
+            var nV = Vector3.Dot(delta, speed);
+
+            player.Speed = speed - MathHelper.Min(nV, 0) * delta;
+        }
+
+
+        public static void Water(Node node, Entity player, Vector3 speed)
+        {
+
         }
 
         public static void RightSlope(Node node, Entity player, Vector3 speed)
@@ -280,7 +331,7 @@ namespace darkcave
             if (dist == null)
                 return;
 
-            if (b.Max.X > node.CollisionBox.Max.X || b.Max.Y < node.CollisionBox.Min.Y)
+            if (b.Max.X > node.CollisionBox.Max.X || b.Max.Y <= node.CollisionBox.Min.Y + 0.1f)
             {
                 HardCollision(node, player, speed);
                 return;
@@ -308,7 +359,7 @@ namespace darkcave
             if (dist == null)
                 return;
 
-            if (b.Min.X < node.CollisionBox.Min.X || b.Max.Y < node.CollisionBox.Min.Y)
+            if (b.Min.X < node.CollisionBox.Min.X || b.Max.Y < node.CollisionBox.Min.Y + 0.1f)
             {
                 HardCollision(node, player, speed);
                 return;

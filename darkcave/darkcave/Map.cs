@@ -41,14 +41,16 @@ namespace darkcave
             {
                 double x = i1 / Size.X;
                     
-                double noise = Noise.NextOctave1D(3, -x, 2.5f) / 5 + 0.5f;
-                double noise2 = Math.Abs(Noise.NextOctave1D(3, x, 2.5f)) / 10;
+                double noise = Noise.NextOctave1D(1, x, 2.5f) / 5 + 0.5f;
+                double noise3 = Math.Abs(Noise.NextOctave1D(2, x, 2.5f));
+                double noise2 = Math.Abs(Noise.NextOctave1D(3, x, noise3)) / 10;
 
 
+                noise = MathHelper.Clamp((float)(noise + noise2* noise3), 0, 1);
 
-                noise = MathHelper.Clamp( (float) (noise + noise2), 0, 1);
+                i3 = (int)(noise * (Y - 1));
 
-                i3 = (int)(noise * (Y -1));
+                if (i3 < 3) i3 = 3;
 
                 var node = new Node
                 {
@@ -72,10 +74,13 @@ namespace darkcave
 
                     node.SetPosition(new Vector3(i1, i2, 0));
 
-                    if (noise >0.6f && noise < 0.7f && i2 < 20)
-                        node.SetType(NodeFactory.Get(NodeTypes.Fire));
+                    if (noise > 0.6f && noise < 0.7f && i2 < 20)
+                    {
+                        node.SetType(NodeFactory.Get(NodeTypes.EarthBack));
+                        node.SetType(NodeFactory.Get(NodeTypes.Lava));
+                    }
                     else
-                    node.SetType(NodeFactory.Get(noise < 0.7f ? NodeTypes.Earth : NodeTypes.Air, true));
+                        node.SetType(NodeFactory.Get(noise < 0.7f ? NodeTypes.Earth : NodeTypes.EarthBack));
 
                     ForeGround[i1, i2] = node;
                 }
@@ -87,6 +92,7 @@ namespace darkcave
                         Value = noise,
                     };
                     node.SetPosition(new Vector3(i1, i2, 0));
+                    node.SetType(NodeFactory.Get(NodeTypes.EarthBack));
                     node.SetType(NodeFactory.Get(NodeTypes.Soil));
 
                     ForeGround[i1, i2] = node;
@@ -221,9 +227,9 @@ namespace darkcave
             return new LocalEnvironment { Node = this.GetNode((int) Math.Round(position.X), (int) Math.Round(position.Y))};
         }
 
-        public void SpawnLight(Vector3 position)
+        public void SpawnLight(Entity lightsource)
         {
-            lighting.lights.Add(new PointLight { Position = position, ForeGround = ForeGround, X = X, Y = Y });
+            lighting.lights.Add(new PointLight { Source = lightsource, ForeGround = ForeGround, X = X, Y = Y });
         }
     }
 }

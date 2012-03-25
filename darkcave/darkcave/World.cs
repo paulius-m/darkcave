@@ -11,6 +11,7 @@ namespace darkcave
         public delegate void Interaction();
 
         public List<Entity> Entities = new List<Entity>();
+        public List<Entity> Items = new List<Entity>();
         public Map Map;
         private Interaction[] actions = new Interaction[10];
         private int count;

@@ -43,10 +43,10 @@ namespace darkcave
         {
             IsMouseVisible = true;
 
-            map = new Map (new Vector3(400, 100, 0));
+            map = new Map (new Vector3(400, 200, 0));
             cam = new Camera();
             player = EntityFactory.GetPlayer();
-            player.Postion = new Vector3(70, 100, 0);
+            player.Postion = new Vector3(150, 200, 0);
             
             gameWorld = new World();
             gameWorld.AddEntity(player);
@@ -54,7 +54,7 @@ namespace darkcave
 
             render = new Renderer();
             render.Groups.Add(
-                new RenderGroup(40000, "atlas", map)
+                new RenderGroup(400000, "atlas", map)
                 );
             render.Groups.Add(
                 entitygroup = new RenderGroup(200, "char1", player )
@@ -82,7 +82,7 @@ namespace darkcave
         {
         }
 
-        NodeTypes newNodeType = NodeTypes.Custom;
+        NodeTypes newNodeType = NodeTypes.Water;
         MouseState oldstate;
         protected override void Update(GameTime gameTime)
         {
@@ -98,9 +98,6 @@ namespace darkcave
                 if (mouse.LeftButton == ButtonState.Pressed && mouse.LeftButton == oldstate.LeftButton)
                 {
                     var type = NodeFactory.Get(newNodeType);
-                    //type.ResolveCollision = NodeFactory.Slope;
-                    type.Texture = new Vector3(1f, 7f, 0);
-                    //type.Emission = Vector3.One;
                     node.SetType(type);
 
                 }
@@ -113,10 +110,11 @@ namespace darkcave
                 if (mouse.MiddleButton == ButtonState.Pressed && mouse.MiddleButton != oldstate.MiddleButton)
                 {
                     point = new Vector3((int)point.X, (int)point.Y, 0);
-                    map.SpawnLight(point);
-                    render.AddLight(point);
                     var torch = EntityFactory.GetTorch();
                     torch.SetPosition(point);
+
+                    map.SpawnLight(torch);
+                    render.AddLight(torch);
                     gameWorld.AddEntity(torch);
                     itemgroup.Instances.Add(torch);
                 }

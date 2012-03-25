@@ -12,6 +12,7 @@ uniform float2 Offset : register(c0);
 
 int  TileCount;
 float2 Light;
+const float Distance;
 texture Texture;
 texture Shadow;
 texture Ambient;
@@ -199,7 +200,7 @@ float2 toPolar(float2 coord)
 {
 	float2 pos = coord;
 	float r = pos.y;
-	//text = float2(r * cos(text.x*6.28) + .5, r * sin(text.x*6.28) + 0.5f);
+
 	float2 text = float2(r * - cos(pos.x*6.28), r * sin(pos.x*6.28)) + Light;
 	return text;
 }
@@ -217,15 +218,15 @@ float4 ZMapShader(VertexShaderOutput input) : COLOR0
 	{
 		text.y = r;
 		map = tex2D(shadow, toPolar(text));
-		if ((map.a > 0)  && r < minimum)
+		if ((map.a == 1)  && r < minimum)
 			minimum = r;
 	}
 	if (minimum == 1)
-		for ( r = 0.5; r <= 1; r +=0.002)
+		for ( r = 0.5; r <= 1; r +=0.004)
 		{
 			text.y = r;
 			map = tex2D(shadow, toPolar(text));
-			if ((map.a > 0)  && r < minimum)
+			if ((map.a == 1)  && r < minimum)
 				minimum = r;
 		}
 	minimum *=2;
@@ -246,41 +247,16 @@ float4 ShadowAccumShader(VertexShaderOutput input): COLOR0
 
 	float4 color = float4(0,0,0,0);
 
-	if (shadowy > 1)
+	if (shadowy > Distance)
 	return color;
 
 
 	if (shadowy < shad.x)
 	{
-		color.xyz = 1 - shadowy;
-		color.a = 1 - shadowy;
+		color.xyz = Distance - shadowy;
+		color.a = Distance - shadowy;
 	}
 	return color;
-}
-
-RepeatPixelShaderOutput RepeatShader (VertexShaderOutput input)
-{
-	RepeatPixelShaderOutput output;
-	output.Ambience = tex2D(ambient, input.TextureCoordinate.xy);
-	output.Ambience2 = tex2D(ambient2, input.TextureCoordinate.xy);
-
-	return output;
-}
-
-
-float4 blur(sampler text, float2 xy)
-{
-	float4 res = float4(0,0,0,0);
-	float2 coord;
-	for (int i = 0; i < 9; i++)
-	{
-		coord.x = xy.x + points[i].x/800;
-		coord.y = xy.y + points[i].y/480;
-		float4 s = tex2D(text, coord);
-			res += s/9;
-	}
-
-	return res;
 }
 
 float4 FinalShader(VertexShaderOutput input) : COLOR0
@@ -332,15 +308,6 @@ technique ShadowAccum
 	{
 		VertexShader = compile vs_3_0 SimpleVertexShader();
 		PixelShader = compile ps_3_0 ShadowAccumShader();
-	}
-}
-
-technique Repeat
-{
-	pass Pass1
-	{
-		VertexShader = compile vs_3_0 SimpleVertexShader();
-		PixelShader = compile ps_3_0 RepeatShader();
 	}
 }
 

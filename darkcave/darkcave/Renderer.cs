@@ -133,7 +133,7 @@ namespace darkcave
 
         Camera planeCam;
 
-        List<Vector3> lights = new List<Vector3> ();
+        List<Entity> lights = new List<Entity>();
 
         BasicEffect be;
 
@@ -186,9 +186,9 @@ namespace darkcave
             be = new BasicEffect(Device);
         }
 
-        public void AddLight(Vector3 pos)
+        public void AddLight(Entity source)
         {
-            lights.Add(pos);
+            lights.Add(source);
             zmaps.Add(new RenderTarget2D(Device, 1024, 1, true, SurfaceFormat.Rg32, DepthFormat.None));
         }
 
@@ -221,6 +221,10 @@ namespace darkcave
             effect.CurrentTechnique = effect.Techniques["Final"];
             effect.CurrentTechnique.Passes[0].Apply();
             Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+
+            //using (System.IO.Stream s = System.IO.File.OpenWrite("D:\\sh.png"))
+            //    shadow.SaveAsPng(s, shadow.Width, shadow.Height);
+
         }
 
         private Vector2 toScreenSpace(Vector3 r, Camera cam )
@@ -295,13 +299,15 @@ namespace darkcave
         {
             for (int i = 0; i < lights.Count; i++)
             {
-                Vector3 r = lights[i];
+                Vector3 r = lights[i].Postion;
 
                 if (Vector3.Distance(r, cam.Target) > cam.ViewSize.Length())
                     continue;
 
                 Device.SetRenderTarget(zmaps[i]);
                 effect.Parameters["Light"].SetValue(toScreenSpace(r, cam));
+                effect.Parameters["Distance"].SetValue(0.5f);
+
                 effect.Parameters["Shadow"].SetValue(opacity);
 
                 effect.CurrentTechnique = effect.Techniques["ZMap"];
@@ -314,12 +320,12 @@ namespace darkcave
             
             for (int i = 0; i < lights.Count; i++)
             {
-                Vector3 r = lights[i];
+                Vector3 r = lights[i].Postion;
                 if (Vector3.Distance(r, cam.Target) > cam.ViewSize.Length())
                     continue;
 
                 effect.Parameters["Light"].SetValue(toScreenSpace(r, cam));
-
+                effect.Parameters["Distance"].SetValue(0.5f);
                 effect.Parameters["Shadow"].SetValue(zmaps[i]);
                 effect.CurrentTechnique = effect.Techniques["ShadowAccum"];
                 effect.CurrentTechnique.Passes[0].Apply();
