@@ -49,23 +49,10 @@ namespace darkcave
             position = new Vector3(50, 50,40);
             target = new Vector3(30, 30, 0);
 
-            Offset = new Vector2(-0.5f / ViewPort.Width, 0.5f / ViewPort.Height);
+            Offset = new Vector2(1 / ViewPort.Width, 1 / ViewPort.Height);
 
 
             updateView();
-        }
-
-        public Camera(Vector2 size)
-        {
-            int zoom = 32;
-
-            ViewSize = new Vector2(size.X / zoom, size.Y / zoom);
-            Projection = Matrix.CreateOrthographic(ViewSize.X, ViewSize.Y, 1.0f, 1000.0f);
-
-            position = new Vector3(50, 50, 40);
-            target = new Vector3(30, 30, 0);
-            updateView();
-        
         }
 
         public Ray Unproject(float mouseX, float mouseY)

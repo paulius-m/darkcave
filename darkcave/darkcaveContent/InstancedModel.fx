@@ -18,7 +18,8 @@ texture Shadow;
 texture Ambient;
 texture Ambient2;
 
-
+float4 skycolor;
+float4 downcolor;
 
 sampler diffuse = sampler_state
 {
@@ -163,6 +164,25 @@ PixelShaderOutput ColorShader(VertexShaderOutput input)
 }
 
 
+VertexShaderOutput SkyVertexShader(VertexShaderInput input,
+                                                  float4x4 instanceTransform : BLENDWEIGHT, float4 color: COLOR1, float4 light: COLOR2, float3 text : TEXCOORD1)
+{
+	VertexShaderOutput output = VertexShaderCommon(input, transpose(instanceTransform));
+	output.Color = skycolor*(1 - input.TextureCoordinate.y) + downcolor * (input.TextureCoordinate.y);
+	output.Pos = light;
+	output.TextureCoordinate = (text + output.TextureCoordinate) / TileCount;
+	return output; 
+}
+
+PixelShaderOutput SkyShader(VertexShaderOutput input)
+{
+	PixelShaderOutput output;
+
+	output.Color.xyzw = 0;
+	output.Ambience.xyzw = input.Color.xyzw;
+	output.Opacity.xyzw = float4(0,0,0,0);
+	return output;
+}
 
 VertexShaderOutput HardwareInstancingVertexShader(VertexShaderInput input,
                                                   float4x4 instanceTransform : BLENDWEIGHT, float3 color: COLOR1, float3 light: COLOR2, float3 text : TEXCOORD1)
@@ -269,10 +289,7 @@ float4 FinalShader(VertexShaderOutput input) : COLOR0
 	float4 amb2 = tex2D(ambient2, input.TextureCoordinate.xy);
 	float4 shad = tex2D(shadow, input.TextureCoordinate.xy);
 
-	if (map.a == 0)
-		color = skycolor*(1 - input.TextureCoordinate.y) + downcolor * (input.TextureCoordinate.y); //TODO: move new shader for sky
-	else
-		color.xyz = (amb2.xyz * shad.xyz + amb.xyz) * map.xyz;
+	color.xyz = (amb2.xyz * shad.xyz + amb.xyz) * map.xyz;
 
 	return color;
 }
@@ -283,6 +300,15 @@ technique Color
     {
         VertexShader = compile vs_3_0 ColorVertexShader();
         PixelShader = compile ps_3_0 ColorShader();
+    }
+}
+
+technique Sky
+{
+    pass Pass1
+    {
+        VertexShader = compile vs_3_0 SkyVertexShader();
+        PixelShader = compile ps_3_0 SkyShader();
     }
 }
 

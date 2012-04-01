@@ -174,9 +174,12 @@ namespace darkcave
 
         public void Update(BoundingBox area)
         {
+
+            Color = new Vector3(Game1.Instance.gameWorld.SkyColor.X, Game1.Instance.gameWorld.SkyColor.Y, Game1.Instance.gameWorld.SkyColor.Z);
+
             for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
             {
-                float ambIntencity = 1;
+                float ambIntencity = 2;
 
                 for (int i2 = Relief[i1]; i2 >= area.Min.Y; i2--)
                 {
@@ -228,6 +231,7 @@ namespace darkcave
         
         public void Update(BoundingBox area)
         {
+            Color = new Vector3(Game1.Instance.gameWorld.SunColor.X, Game1.Instance.gameWorld.SunColor.Y, Game1.Instance.gameWorld.SunColor.Z);
             for (int i1 = (int)area.Min.X; i1 < area.Max.X; i1++)
             {
                 float intensity = 2f;
@@ -255,7 +259,7 @@ namespace darkcave
 
 
                             if (node.Emmision.X < 2 && node.Emmision.Y < 2 && node.Emmision.Z < 2)
-                                node.Emmision += new Vector3(intensity) * (node.Type.Opacity);
+                                node.Emmision += new Vector3(intensity) * Color * (node.Type.Opacity);
 
                             DirectlyLight.Add(node);
                             intensity -= node.Type.Opacity;

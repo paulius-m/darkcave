@@ -179,7 +179,7 @@ namespace darkcave
                             {"1111", new Vector3(2, 5, 0)},
                         }
 
-                    }.AddDecals(DecalFactory.Get(DecalType.Grass));
+                    };
                     break;
                 case NodeTypes.Air:
                     o = new NodeType
@@ -188,7 +188,7 @@ namespace darkcave
                         Texture = new Vector3(14, 0, 0),
                         CanCollide = false,
                         CanRender = false,
-                        Emission = new Vector3(.1f, .125f, 0.25f),
+                        //Emission = new Vector3(.1f, .125f, 0.25f),
                     };
                     break;
                 case NodeTypes.EarthBack:

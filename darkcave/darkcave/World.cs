@@ -16,6 +16,15 @@ namespace darkcave
         private Interaction[] actions = new Interaction[10];
         private int count;
 
+        Vector4[] sky1 = new Vector4[] { new Vector4(0.4f, 0.6f, 0.9f, 1), new Vector4(0.4f, 0.6f, 0.9f, 1), new Vector4(0.1f, 0.2f, 0.5f, 1), new Vector4(0.1f, 0.1f, 0.1f, 1), new Vector4(0, 0.0f, 0.1f, 1), new Vector4(0.0f, 0.2f, 0.5f, 1) };
+        Vector4[] sky2 = new Vector4[] { new Vector4(1, 1, 1, 1), new Vector4(1, 1, 1, 1), new Vector4(2, 0.5f, 0.5f, 1), new Vector4(0, 0.0f, 0.1f, 1), new Vector4(0, 0.0f, 0.1f, 1), new Vector4(1, 0.4f, 0.6f, 1), };
+
+        public Vector4 SkyColor;
+        public Vector4 SunColor;
+
+        int pos1 = 0;
+        int pos2 = 0;
+
 
         public World()
             : base(Game1.Instance)
@@ -45,6 +54,17 @@ namespace darkcave
                 Map.ResolveCollisions(Entities[i]);
             for (int i = 0; i < Entities.Count; i++)
                 Entities[i].Update();
+
+            pos2++;
+            const float maxpos2 = 1000;
+            if (pos2 > maxpos2)
+            {
+                pos1 = (pos1 + 1) % sky1.Length;
+                pos2 = 0;
+            }
+
+            SkyColor = sky1[pos1] * (1f - pos2 / maxpos2) + sky1[(pos1 + 1) % sky1.Length] * (pos2 / maxpos2);
+            SunColor = sky2[pos1] * (1f - pos2 / maxpos2) + sky2[(pos1 + 1) % sky2.Length] * (pos2 / maxpos2);
         }
 
         public void Damage(Entity sender, BoundingSphere area, int amount)

@@ -201,15 +201,19 @@ namespace darkcave
         {
             // Set up the instance rendering effect.
             Effect effect = meshPart.Effect;
-            effect.Parameters["Offset"].SetValue(cam.Offset);
             RenderInstances(meshPart, effect, cam);
 
             Device.SetVertexBuffers(
                 new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
                 new VertexBufferBinding(instanceVertexBuffer, 0, 1)
             );
+            
+            
+            
             effect.Parameters["View"].SetValue(planeCam.View);
             effect.Parameters["Projection"].SetValue(planeCam.Projection);
+            effect.Parameters["Offset"].SetValue(planeCam.Offset);
+
 
             RenderShadows(meshPart, effect, cam);
 
@@ -237,14 +241,36 @@ namespace darkcave
 
         private void RenderInstances(ModelMeshPart meshPart, Effect effect, Camera cam)
         {
-            effect.Parameters["View"].SetValue(cam.View);
-            effect.Parameters["Projection"].SetValue(cam.Projection);
+            effect.Parameters["View"].SetValue(planeCam.View);
+            effect.Parameters["Projection"].SetValue(planeCam.Projection);
+            effect.Parameters["Offset"].SetValue(planeCam.Offset);
 
+            effect.Parameters["skycolor"].SetValue(Game1.Instance.gameWorld.SkyColor);
+            effect.Parameters["downcolor"].SetValue(Game1.Instance.gameWorld.SunColor);
             Device.Indices = meshPart.IndexBuffer;
-            effect.CurrentTechnique = effect.Techniques["Color"];
 
             Device.SetRenderTargets(color, opacity, ambience);
-            Device.Clear(new Color(1f,1f,1f, 0f));
+            Device.Clear(new Color(1f, 1f, 1f, 0f));
+
+            effect.CurrentTechnique = effect.Techniques["Sky"];
+
+            Device.SetVertexBuffers(
+                new VertexBufferBinding(meshPart.VertexBuffer, meshPart.VertexOffset, 0),
+                new VertexBufferBinding(instanceVertexBuffer, 0, 1)
+            );
+
+            effect.CurrentTechnique.Passes[0].Apply();
+
+            Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, 1);
+
+            effect.Parameters["View"].SetValue(cam.View);
+            effect.Parameters["Projection"].SetValue(cam.Projection);
+            effect.Parameters["Offset"].SetValue(cam.Offset);
+
+
+            effect.CurrentTechnique = effect.Techniques["Color"];
+
+
 
             foreach (var group in Groups)
             {
@@ -290,7 +316,6 @@ namespace darkcave
                 );
 
                 effect.CurrentTechnique.Passes[0].Apply();
-
                 Device.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount, group.InstanceCount);
             }
         }

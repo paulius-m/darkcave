@@ -39,7 +39,7 @@ namespace darkcave
             Relief = new int[x];
 
             sun = new DirectionalLight { Direction = new Vector3(-0.5f, -0.5f, 0), ForeGround = foreGround, X = x, Y = y, Relief = Relief };
-            sky = new SkyLight { Color = new Vector3(.4f, .5f, 1f), ForeGround = foreGround, X = x, Y = y, Relief = Relief};
+            sky = new SkyLight { ForeGround = foreGround, X = x, Y = y, Relief = Relief};
 
             for (int i1 = 0; i1 < X; i1++)
             {
@@ -341,6 +341,7 @@ namespace darkcave
             node.Type.SetTexture(texture);
             if (node.Type.Type == NodeTypes.Soil)
             {
+                node.Type.Decals.Clear();
                 if (texture == "0011")
                 {
                     node.Type.ResolveCollision = NodeFactory.LeftSlope;
@@ -350,11 +351,19 @@ namespace darkcave
                 else if (texture == "1001")
                 {
                     node.Type.ResolveCollision = NodeFactory.RightSlope;
-                    node.Type.Decals.Clear();
+
                 }
                 else
                 {
                     node.Type.ResolveCollision = NodeFactory.HardCollision;
+
+                    if (texture[3] == '1')
+                    {
+                        var grass = DecalFactory.Get(DecalType.Grass);
+                        grass.Init(node);
+                        node.Type.AddDecals(grass);
+                    }
+
                 }
 
 
